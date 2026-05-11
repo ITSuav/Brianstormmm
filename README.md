@@ -1,39 +1,43 @@
 # Brianstormmm Frontend Command Center
 
-Frontend command-center dashboard for the ITSuav drone delivery project. The current build focuses on an HKSTP-style operations screen for drone food/material delivery, with a real Hong Kong terrain asset pipeline and reserved interfaces for the algorithm and backend teams.
+[![Original Brainstorm README](https://img.shields.io/badge/Original%20Brainstorm%20README-Open-4285F4?style=for-the-badge)](docs/original-brainstorm-readme.md)
 
 ![Brianstormmm frontend command center](docs/images/frontend-command-center.png)
 
-## Current Status
+## 繁體中文
 
-- Frontend: React + TypeScript + Vite dashboard is implemented.
-- Central digital twin: interactive Three.js local-scene terrain with mouse drag, mouse-wheel zoom, bounded pan, and constrained 3D orbit rotation.
-- Geospatial assets: generated from real Google Earth Engine datasets for the Hong Kong study area.
-- Blender assets: generated from the real GEE heightmap and Sentinel-2 texture.
-- Route planning: reserved for algorithm-team output; no frontend mock route is presented as a validated route.
-- MATSim: reserved as a later integration slot; not implemented in the frontend yet.
-- Operational numbers: current values are frontend placeholders and should become live values after the company/backend data APIs are available.
+### 專案定位
 
-## Quick Start
+Brianstormmm Frontend Command Center 是 ITSuav 無人機配送專案的前端總控大屏。當前版本聚焦香港科學園與山地配送場景，提供一個可展示、可維護、可後續接入演算法與後端 API 的 React 前端。
 
-### One-Click Local Open
+原始 Brainstorm 方案已保留在 [docs/original-brainstorm-readme.md](docs/original-brainstorm-readme.md)。上方 badge 按鈕可直接跳轉。
 
-On this Windows workstation, a desktop shortcut has been created:
+### 目前狀態
+
+- 前端：React + TypeScript + Vite 已完成。
+- 中央視圖：Three.js 互動式 3D local scene，支援滑鼠拖曳、滾輪縮放、受限平移與一定角度內的環繞旋轉。
+- 地理資料：由真實 Google Earth Engine 資料生成香港區域地形與衛星影像。
+- Blender 資產：由 GEE 高程圖與 Sentinel-2 紋理生成真實渲染圖與 GLB。
+- 路線規劃：保留為演算法組接入口，目前不把前端展示路線宣稱為已驗證航線。
+- MATSim：保留為後續模擬團隊接入口，目前前端只展示協作槽位。
+- 大屏數字：目前為前端展示佔位資料，待取得公司資料 API 後替換為即時動態資料。
+
+### 快速開啟
+
+桌面已建立快捷方式：
 
 ```text
 C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
 ```
 
-It runs the repository launcher script and opens the dashboard in the browser. If the Vite dev server is not already running on port `5174`, the script starts it first.
-
-Equivalent command:
+等效命令：
 
 ```powershell
 Set-Location 'D:\ITSuav\Brianstormmm'
 npm run open
 ```
 
-### Manual Development Start
+手動啟動：
 
 ```powershell
 Set-Location 'D:\ITSuav\Brianstormmm'
@@ -41,232 +45,86 @@ npm install
 npm run dev -- --host 127.0.0.1 --port 5174
 ```
 
-Open:
+瀏覽器開啟：
 
 ```text
 http://127.0.0.1:5174/?v=latest
 ```
 
-### Build And Check
+### 前端技術亮點
 
-```powershell
-Set-Location 'D:\ITSuav\Brianstormmm'
-npm run build
-npm run lint
-```
+- 大屏風格是營運總控，而不是行銷 landing page。
+- 預設繁體中文，並支援 English / 简体中文 / 繁體中文切換。
+- 使用 Google 風格藍、綠、黃、紅作為操作狀態點綴，但避免繁雜彩條。
+- 中央 3D 地形由真實 GEE DEM 在瀏覽器端取樣生成，並覆蓋 Sentinel-2 真彩色影像。
+- `src/components/DigitalTwinViewport.tsx` 使用 Three.js + OrbitControls 實現 local scene 互動。
+- `src/domain/models.ts` 定義無人機、航線、任務、資產與指標的 TypeScript 邊界。
+- `src/data/assetRegistry.ts` 區分已生成真實資產、未來必需官方資料與暫時 blocked 的展示層。
 
-The build currently passes. Vite may warn that the main JavaScript chunk is larger than 500 kB because Three.js is included for the interactive 3D viewport. This is not a runtime failure; it can be optimized later with route-level or component-level code splitting.
+### 資料來源
 
-## Frontend Technical Highlights
+GEE 腳本：`scripts/export_gee_assets.py`
 
-### Command-Center UI
+目前使用：
 
-- Dark operations dashboard tuned for large-screen monitoring rather than a marketing landing page.
-- Trilingual interface: English, Simplified Chinese, Traditional Chinese.
-- Google-inspired accent palette for operational state, but the UI avoids noisy multicolor striping.
-- Dense panels for fleet readiness, route intake, operations tools, partner interfaces, metrics, and workflow timing.
-- Visible operator controls are intentionally high-level: new order, dispatch fleet, import route, airspace check, kitchen window, and return to base.
+- `COPERNICUS/DEM/GLO30`：30 m DEM，高程來源。
+- `COPERNICUS/S2_SR_HARMONIZED`：Sentinel-2 地表反射率，真彩色衛星紋理。
+- `JRC/GSW1_4/GlobalSurfaceWater`：水體 occurrence，作為風險篩查輸入之一。
+- `ee.Terrain.slope(COPERNICUS/DEM/GLO30)`：坡度圖層。
+- Sentinel-2 `B8` 與 `B4` 計算 NDVI：植被風險篩查。
 
-### Interactive 3D Digital Twin
-
-The central viewport is implemented in `src/components/DigitalTwinViewport.tsx`.
-
-- Uses Three.js and `OrbitControls`.
-- Samples the real GEE DEM heightmap in-browser to generate a terrain mesh.
-- Drapes the real Sentinel-2 texture over the terrain mesh.
-- Uses a `z-up` camera convention closer to GIS local-scene tools.
-- Allows mouse drag, mouse-wheel zoom, bounded panning, and constrained orbit rotation.
-- Keeps the Blender render as a loading fallback only, so the 3D scene does not visually double-stack with the render.
-- Includes a reset-view button for presentation recovery.
-
-### Typed Frontend Contracts
-
-Domain models live in `src/domain/models.ts`:
-
-- `Drone`
-- `DroneStatus`
-- `DroneRouteCandidate`
-- `RouteWaypoint`
-- `RoutePlanningStatus`
-- `MissionEvent`
-- `Metric`
-- geospatial and digital-twin asset records
-
-These types are the frontend boundary for algorithm and backend handoff. The UI should consume API data by converting API payloads into these typed models.
-
-### Asset Registry
-
-The asset registry lives in `src/data/assetRegistry.ts` and separates:
-
-- real generated assets,
-- required future official datasets,
-- blocked future visual layers,
-- route/MATSim interfaces that must wait for algorithm-team or backend outputs.
-
-## Data Sources And Provenance
-
-The frontend uses real data for geospatial and terrain visuals. It does not invent building extrusion, official airspace restrictions, or validated routes.
-
-### Google Earth Engine Products
-
-Generated by `scripts/export_gee_assets.py`.
-
-Study bounds:
-
-```text
-Hong Kong regional bounds: 113.82, 22.13, 114.46, 22.58
-```
-
-Current datasets:
-
-- `COPERNICUS/DEM/GLO30`: 30 m DEM used as heightmap source.
-- `COPERNICUS/S2_SR_HARMONIZED`: Sentinel-2 surface reflectance used as true-color satellite terrain texture.
-- `JRC/GSW1_4/GlobalSurfaceWater`: water occurrence used in the screening risk layer.
-- `ee.Terrain.slope(COPERNICUS/DEM/GLO30)`: slope layer used for terrain screening.
-- NDVI from Sentinel-2 bands `B8` and `B4`: vegetation input for screening.
-
-Generated files:
+生成檔案：
 
 - `public/assets/geospatial/hk-gee-dem-heightmap.png`
 - `public/assets/geospatial/hk-gee-sentinel2-texture.png`
 - `public/assets/geospatial/hk-gee-slope.png`
 - `public/assets/geospatial/hk-gee-risk-surface.png`
 - `public/assets/geospatial/manifest.json`
-
-Limitations:
-
-- Copernicus DEM is regional 30 m data, not LiDAR-grade engineering terrain.
-- Sentinel-2 is suitable for regional context, not close-range infrastructure inspection.
-- The risk surface is a frontend screening layer, not an algorithm-approved route planner.
-- Final drone operations need official airspace, obstacle, weather, building-height, and permission data.
-
-### Blender Outputs
-
-Generated by `scripts/render_blender_terrain.py` from the GEE heightmap and Sentinel-2 texture.
-
-Generated files:
-
 - `public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png`
 - `public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb`
 - `public/assets/drone-twin/hkstp/blender-manifest.json`
 
-The Blender render is used as a fallback and documentation-quality visual asset. The browser digital twin now builds its own interactive mesh from the same real DEM and satellite texture sources.
+限制：這些資料適合前端展示與區域級篩查，不是航空級工程資料。正式營運仍需官方建築高度、禁飛區、障礙物、天氣與公司內部營運 API。
 
-### Required Future Official Data
+### 前端維護方案
 
-The following should not be faked in the frontend:
+常用位置：
 
-- Hong Kong official building footprints with reliable heights.
-- No-fly zones, restricted airspace, helipad/airport buffers, and temporary restrictions.
-- Utility obstacles, cranes, terrain hazards, and delivery landing constraints.
-- Weather, wind, rain, visibility, and alert feeds.
-- Company telemetry, order, drone, route, and dispatch APIs.
+- 主要版面：`src/App.tsx`
+- 大屏樣式：`src/App.css`
+- 全域樣式：`src/index.css`
+- 中央 3D 視圖：`src/components/DigitalTwinViewport.tsx`
+- 三語文案：`src/i18n/translations.ts`
+- 目前佔位營運資料：`src/data/commandCenterData.ts`
+- 資產路徑與狀態：`src/data/assetRegistry.ts`
+- 共享型別：`src/domain/models.ts`
 
-## Frontend Maintenance Guide
-
-### Daily Development Loop
-
-```powershell
-Set-Location 'D:\ITSuav\Brianstormmm'
-npm install
-npm run open
-```
-
-Then edit files under `src/`. Vite updates the browser automatically while the dev server is running.
-
-Before handing work to teammates:
+日常檢查：
 
 ```powershell
+npm run assets:verify
 npm run build
 npm run lint
 ```
 
-### Where To Edit Common Things
+更新文案時，請同步英文、简体中文、繁體中文。營運大屏上不要直接展示 GEE、Blender、GLB、manifest、prompt 等技術詞，除非新增的是開發者診斷頁。
 
-- Main layout: `src/App.tsx`
-- Dashboard styling: `src/App.css`
-- Global browser styles: `src/index.css`
-- Central 3D viewport: `src/components/DigitalTwinViewport.tsx`
-- UI text and languages: `src/i18n/translations.ts`
-- Placeholder operational data: `src/data/commandCenterData.ts`
-- Asset paths and readiness state: `src/data/assetRegistry.ts`
-- Shared frontend contracts: `src/domain/models.ts`
+### 演算法與後端接入方案
 
-### Updating Text
-
-Change display copy in `src/i18n/translations.ts`. Keep English, Simplified Chinese, and Traditional Chinese synchronized when adding new labels.
-
-Do not put technical pipeline details such as GEE, Blender, GLB, manifest, or prompt wording into the operator-facing dashboard unless the screen is explicitly changed into a developer/debug view.
-
-### Updating Placeholder Numbers
-
-Current fleet batteries, order counts, readiness values, and SLA values are placeholders. Until real APIs arrive, keep them clearly treated as demonstration values.
-
-When backend APIs are available, replace static imports from `src/data/commandCenterData.ts` with a typed data service, for example:
+建議不要讓 React 元件直接呼叫原始 API，而是在 `src/services/` 建立資料服務與 adapter：
 
 ```text
+src/services/httpClient.ts
 src/services/operationsApi.ts
-src/services/routeApi.ts
-src/services/telemetryApi.ts
+src/services/fleetTelemetryApi.ts
+src/services/routePlanningApi.ts
+src/services/matsimApi.ts
+src/services/geospatialApi.ts
 ```
 
-The service layer should return the existing domain models, so the visual components do not need to know backend response details.
+後端或演算法輸出應先轉換成 `src/domain/models.ts` 中的型別，再交給 UI。
 
-### Updating GEE Assets
-
-1. Configure `.env` from `.env.example`.
-2. Do not commit `.env`.
-3. Authenticate Earth Engine locally if needed.
-4. Run:
-
-```powershell
-npm run assets:gee
-npm run assets:verify
-```
-
-If bounds or date ranges change, update constants in `scripts/export_gee_assets.py` and regenerate the asset manifest.
-
-### Updating Blender Assets
-
-Blender 4.3 is expected on this workstation. The launcher handles the Windows path containing spaces.
-
-```powershell
-npm run assets:blender
-npm run assets:verify
-```
-
-Only regenerate Blender assets after GEE assets are up to date.
-
-### Updating The README Screenshot
-
-Start the app, open the latest dashboard, then capture a full-page screenshot to:
-
-```text
-docs/images/frontend-command-center.png
-```
-
-The current screenshot was captured from the local Vite page at a desktop viewport.
-
-## Algorithm And Backend Integration Plan
-
-The frontend should integrate through typed adapters instead of letting components call raw APIs directly.
-
-### Phase 1: Confirm API Contracts
-
-Backend and algorithm teams should confirm these payload groups:
-
-- fleet status and drone telemetry,
-- delivery orders and kitchen readiness,
-- route planning result packages,
-- MATSim scenario/run summaries,
-- airspace and weather constraints,
-- operator action responses.
-
-The frontend models in `src/domain/models.ts` are the first schema reference. If backend payloads differ, create adapter functions instead of weakening the frontend types.
-
-### Phase 2: Route Planning Interface
-
-Route planner output should map to `DroneRouteCandidate`:
+路線規劃輸出應對應 `DroneRouteCandidate`：
 
 ```json
 {
@@ -290,41 +148,120 @@ Route planner output should map to `DroneRouteCandidate`:
 }
 ```
 
-Allowed route statuses:
+MATSim 第一階段建議只傳營運摘要，不把模擬器內部細節搬到大屏：scenario ID、run status、time window、demand set、network reference、KPI comparison、recommended dispatch window。
 
-- `algorithm_pending`
-- `candidate`
-- `approved`
-- `active`
+即時資料可按後端能力選擇 polling、Server-Sent Events 或 WebSocket。無人機私有遙測與控制通道不應由瀏覽器直接連接，應經後端 gateway。
 
-Frontend behavior:
+---
 
-- `algorithm_pending`: show interface waiting state.
-- `candidate`: show route preview and operator review state.
-- `approved`: allow dispatch preparation.
-- `active`: show live execution or replay state.
+## 简体中文
 
-### Phase 3: MATSim Interface
+### 项目定位
 
-MATSim should provide scenario-level summaries rather than raw simulator internals in the first frontend integration.
+Brianstormmm Frontend Command Center 是 ITSuav 无人机配送项目的前端总控大屏。当前版本聚焦香港科学园与山地配送场景，提供一个可展示、可维护、可后续接入算法与后端 API 的 React 前端。
 
-Suggested fields:
+原始 Brainstorm 方案已保留在 [docs/original-brainstorm-readme.md](docs/original-brainstorm-readme.md)。页面顶部的 badge 按钮可直接跳转。
 
-- scenario ID and name,
-- run status,
-- simulated time window,
-- demand/order set reference,
-- corridor/network reference,
-- route assignment summary,
-- travel-time comparison,
-- congestion or delay indicators,
-- recommended dispatch window.
+### 当前状态
 
-The dashboard should display MATSim as operational guidance, not as a technical simulator console.
+- 前端：React + TypeScript + Vite 已完成。
+- 中央视图：Three.js 交互式 3D local scene，支持鼠标拖拽、滚轮缩放、受限平移与一定角度内的环绕旋转。
+- 地理数据：由真实 Google Earth Engine 数据生成香港区域地形与卫星影像。
+- Blender 资产：由 GEE 高程图与 Sentinel-2 纹理生成真实渲染图与 GLB。
+- 路线规划：保留为算法组接入口，目前不把前端展示路线宣称为已验证航线。
+- MATSim：保留为后续仿真团队接入口，目前前端只展示协作槽位。
+- 大屏数字：目前为前端展示占位数据，待取得公司数据 API 后替换为实时动态数据。
 
-### Phase 4: Backend Service Layer
+### 快速打开
 
-Recommended frontend service layout:
+桌面已创建快捷方式：
+
+```text
+C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
+```
+
+等效命令：
+
+```powershell
+Set-Location 'D:\ITSuav\Brianstormmm'
+npm run open
+```
+
+手动启动：
+
+```powershell
+Set-Location 'D:\ITSuav\Brianstormmm'
+npm install
+npm run dev -- --host 127.0.0.1 --port 5174
+```
+
+浏览器打开：
+
+```text
+http://127.0.0.1:5174/?v=latest
+```
+
+### 前端技术亮点
+
+- 大屏风格是运营总控，而不是营销 landing page。
+- 默认繁体中文，并支持 English / 简体中文 / 繁體中文切换。
+- 使用 Google 风格蓝、绿、黄、红作为操作状态点缀，但避免繁杂彩条。
+- 中央 3D 地形由真实 GEE DEM 在浏览器端采样生成，并覆盖 Sentinel-2 真彩色影像。
+- `src/components/DigitalTwinViewport.tsx` 使用 Three.js + OrbitControls 实现 local scene 交互。
+- `src/domain/models.ts` 定义无人机、航线、任务、资产与指标的 TypeScript 边界。
+- `src/data/assetRegistry.ts` 区分已生成真实资产、未来必需官方数据与暂时 blocked 的展示层。
+
+### 数据源
+
+GEE 脚本：`scripts/export_gee_assets.py`
+
+目前使用：
+
+- `COPERNICUS/DEM/GLO30`：30 m DEM，高程来源。
+- `COPERNICUS/S2_SR_HARMONIZED`：Sentinel-2 地表反射率，真彩色卫星纹理。
+- `JRC/GSW1_4/GlobalSurfaceWater`：水体 occurrence，作为风险筛查输入之一。
+- `ee.Terrain.slope(COPERNICUS/DEM/GLO30)`：坡度图层。
+- Sentinel-2 `B8` 与 `B4` 计算 NDVI：植被风险筛查。
+
+生成文件：
+
+- `public/assets/geospatial/hk-gee-dem-heightmap.png`
+- `public/assets/geospatial/hk-gee-sentinel2-texture.png`
+- `public/assets/geospatial/hk-gee-slope.png`
+- `public/assets/geospatial/hk-gee-risk-surface.png`
+- `public/assets/geospatial/manifest.json`
+- `public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png`
+- `public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb`
+- `public/assets/drone-twin/hkstp/blender-manifest.json`
+
+限制：这些数据适合前端展示与区域级筛查，不是航空级工程数据。正式运营仍需官方建筑高度、禁飞区、障碍物、天气与公司内部运营 API。
+
+### 前端维护方案
+
+常用位置：
+
+- 主要版面：`src/App.tsx`
+- 大屏样式：`src/App.css`
+- 全局样式：`src/index.css`
+- 中央 3D 视图：`src/components/DigitalTwinViewport.tsx`
+- 三语文案：`src/i18n/translations.ts`
+- 当前占位运营数据：`src/data/commandCenterData.ts`
+- 资产路径与状态：`src/data/assetRegistry.ts`
+- 共享类型：`src/domain/models.ts`
+
+日常检查：
+
+```powershell
+npm run assets:verify
+npm run build
+npm run lint
+```
+
+更新文案时，请同步英文、简体中文、繁体中文。运营大屏上不要直接展示 GEE、Blender、GLB、manifest、prompt 等技术词，除非新增的是开发者诊断页。
+
+### 算法与后端接入方案
+
+建议不要让 React 组件直接调用原始 API，而是在 `src/services/` 建立数据服务与 adapter：
 
 ```text
 src/services/httpClient.ts
@@ -335,84 +272,148 @@ src/services/matsimApi.ts
 src/services/geospatialApi.ts
 ```
 
-Recommended runtime behavior:
+后端或算法输出应先转换成 `src/domain/models.ts` 中的类型，再交给 UI。
 
-- Read base URLs from Vite environment variables such as `VITE_API_BASE_URL`.
-- Validate API responses at the boundary before rendering.
-- Convert raw payloads into domain models.
-- Show user-friendly offline or pending states when an API is unavailable.
-- Keep secrets and private API tokens outside frontend code.
+路线规划输出应对应 `DroneRouteCandidate`。允许状态包括：`algorithm_pending`、`candidate`、`approved`、`active`。
 
-### Phase 5: Real-Time Updates
+MATSim 第一阶段建议只传运营摘要，不把仿真器内部细节搬到大屏：scenario ID、run status、time window、demand set、network reference、KPI comparison、recommended dispatch window。
 
-For live operations, use one of these patterns after backend capability is known:
+实时数据可按后端能力选择 polling、Server-Sent Events 或 WebSocket。无人机私有遥测与控制通道不应由浏览器直接连接，应经后端 gateway。
 
-- polling for early demos,
-- Server-Sent Events for one-way operational feeds,
-- WebSocket for bidirectional control-room state,
-- MQTT bridge only through a backend gateway, not directly from the browser to private drone infrastructure.
+---
 
-The current demo numbers should then become live data streams.
+## English
 
-## Repository Structure
+### Project Positioning
+
+Brianstormmm Frontend Command Center is the frontend operations dashboard for the ITSuav drone delivery project. The current version focuses on an HKSTP and mountain-delivery scenario, providing a presentable and maintainable React frontend that can later connect to algorithm and backend APIs.
+
+The original Brainstorm project README is preserved at [docs/original-brainstorm-readme.md](docs/original-brainstorm-readme.md). The badge button at the top links to it directly.
+
+### Current Status
+
+- Frontend: React + TypeScript + Vite is implemented.
+- Central view: interactive Three.js 3D local scene with mouse drag, wheel zoom, bounded pan, and constrained orbit rotation.
+- Geospatial data: real Hong Kong regional terrain and satellite imagery generated from Google Earth Engine.
+- Blender assets: real render and GLB generated from the GEE heightmap and Sentinel-2 texture.
+- Route planning: reserved for the algorithm team; the frontend does not claim displayed routes are validated flight routes.
+- MATSim: reserved for the simulation team; the current UI only shows the collaboration slot.
+- Dashboard numbers: current values are frontend placeholders and should become live values after company data APIs are available.
+
+### Quick Start
+
+A desktop shortcut has been created on this workstation:
 
 ```text
-src/
-  components/      Interactive frontend components
-  data/            Placeholder operational data and asset registry
-  domain/          Shared TypeScript models and frontend contracts
-  i18n/            English, Simplified Chinese, Traditional Chinese copy
-  App.tsx          Main command-center layout
-  App.css          Dashboard styling
-scripts/
-  export_gee_assets.py        Real GEE product export
-  render_blender_terrain.py   Blender terrain render and GLB export
-  run_blender_assets.mjs      Windows-safe Blender launcher
-  verify_assets.py            Asset existence and nonblank checks
-  open-frontend.ps1           Local frontend launcher
-docs/
-  FINAL_PLAN.md               Delivery boundary and implementation plan
-  INTEGRATION_CONTRACTS.md    Algorithm, MATSim, geospatial integration contracts
-  images/                     README screenshots
-data/requirements/
-  missing-official-layers.md  Required future official datasets
-public/assets/
-  geospatial/                 GEE-generated PNGs and manifest
-  drone-twin/hkstp/           Blender-generated render, GLB, and manifest
+C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
 ```
 
-## Verification Checklist Before Push
+Equivalent command:
+
+```powershell
+Set-Location 'D:\ITSuav\Brianstormmm'
+npm run open
+```
+
+Manual development start:
+
+```powershell
+Set-Location 'D:\ITSuav\Brianstormmm'
+npm install
+npm run dev -- --host 127.0.0.1 --port 5174
+```
+
+Open:
+
+```text
+http://127.0.0.1:5174/?v=latest
+```
+
+### Frontend Technical Highlights
+
+- The UI is an operations dashboard, not a marketing landing page.
+- Default locale is Traditional Chinese, with English / Simplified Chinese / Traditional Chinese switching.
+- Google-inspired blue, green, yellow, and red accents indicate operational states without noisy striping.
+- The central 3D terrain is generated in-browser from a real GEE DEM and draped with a Sentinel-2 true-color texture.
+- `src/components/DigitalTwinViewport.tsx` implements the local-scene interaction using Three.js + OrbitControls.
+- `src/domain/models.ts` defines TypeScript boundaries for drones, routes, tasks, assets, and metrics.
+- `src/data/assetRegistry.ts` separates generated real assets, future required official datasets, and currently blocked visualization layers.
+
+### Data Sources
+
+GEE script: `scripts/export_gee_assets.py`
+
+Current datasets:
+
+- `COPERNICUS/DEM/GLO30`: 30 m DEM elevation source.
+- `COPERNICUS/S2_SR_HARMONIZED`: Sentinel-2 surface reflectance true-color satellite texture.
+- `JRC/GSW1_4/GlobalSurfaceWater`: water occurrence as one screening-risk input.
+- `ee.Terrain.slope(COPERNICUS/DEM/GLO30)`: terrain slope layer.
+- NDVI from Sentinel-2 `B8` and `B4`: vegetation screening input.
+
+Generated files:
+
+- `public/assets/geospatial/hk-gee-dem-heightmap.png`
+- `public/assets/geospatial/hk-gee-sentinel2-texture.png`
+- `public/assets/geospatial/hk-gee-slope.png`
+- `public/assets/geospatial/hk-gee-risk-surface.png`
+- `public/assets/geospatial/manifest.json`
+- `public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png`
+- `public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb`
+- `public/assets/drone-twin/hkstp/blender-manifest.json`
+
+Limitations: these datasets are suitable for frontend visualization and regional screening, not aviation-grade engineering operations. Production operations still require official building heights, no-fly zones, obstacle data, weather feeds, and company operations APIs.
+
+### Frontend Maintenance Plan
+
+Common edit locations:
+
+- Main layout: `src/App.tsx`
+- Dashboard styling: `src/App.css`
+- Global styles: `src/index.css`
+- Central 3D view: `src/components/DigitalTwinViewport.tsx`
+- Trilingual copy: `src/i18n/translations.ts`
+- Current placeholder operations data: `src/data/commandCenterData.ts`
+- Asset paths and readiness state: `src/data/assetRegistry.ts`
+- Shared types: `src/domain/models.ts`
+
+Routine checks:
 
 ```powershell
 npm run assets:verify
 npm run build
 npm run lint
-git status --short
 ```
 
-Also check:
+When updating copy, keep English, Simplified Chinese, and Traditional Chinese synchronized. Do not expose GEE, Blender, GLB, manifest, prompt, or similar implementation terms on the operator-facing dashboard unless a developer diagnostics page is intentionally added.
 
-- `.env` is not staged.
-- `node_modules/` and `dist/` are not staged.
-- generated real assets under `public/assets/` are intentionally included only if the team wants the demo to run without regenerating assets.
-- screenshots under `docs/images/` are current.
-- no API keys, account emails, private tokens, or service-account JSON files are committed.
+### Algorithm And Backend Integration Plan
 
-## Deployment Notes
+Do not let React components call raw APIs directly. Add typed services and adapters under `src/services/`:
 
-This is currently a static Vite frontend. It can be deployed to GitHub Pages, Azure Static Web Apps, Vercel, Netlify, or an internal static server after API base URLs are finalized.
+```text
+src/services/httpClient.ts
+src/services/operationsApi.ts
+src/services/fleetTelemetryApi.ts
+src/services/routePlanningApi.ts
+src/services/matsimApi.ts
+src/services/geospatialApi.ts
+```
 
-For production integration, prefer:
+Backend or algorithm output should be converted into the models in `src/domain/models.ts` before reaching the UI.
 
-- static frontend build from `npm run build`,
-- backend API gateway for private data and authentication,
-- environment-specific `VITE_*` variables injected at build time,
-- no direct browser access to drone-control secrets or private infrastructure.
+Route planner output should map to `DroneRouteCandidate`. Allowed statuses are `algorithm_pending`, `candidate`, `approved`, and `active`.
 
-## Current Caveats
+For MATSim, the first integration should provide operations-level summaries rather than raw simulator internals: scenario ID, run status, time window, demand set, network reference, KPI comparison, and recommended dispatch window.
 
-- Route optimization is not implemented in the frontend.
-- MATSim is not implemented in the frontend.
-- Existing numeric values are placeholder display data until company APIs are available.
-- The current terrain is real regional data, but not aviation-grade engineering data.
-- Official building-height and airspace datasets are still required before city-scale extrusion or operational clearance can be represented truthfully.
+For live data, choose polling, Server-Sent Events, or WebSocket based on backend capability. Private drone telemetry and control channels should go through a backend gateway, not directly from the browser.
+
+## Verification
+
+```powershell
+npm run assets:verify
+npm run build
+npm run lint
+```
+
+Before pushing, verify that `.env`, `node_modules/`, `dist/`, service-account JSON files, private tokens, and API keys are not staged.
