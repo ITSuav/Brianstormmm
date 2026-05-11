@@ -1,10 +1,26 @@
 # Brianstormmm Frontend Command Center
 
-[![Original Brainstorm README](https://img.shields.io/badge/Original%20Brainstorm%20README-Open-4285F4?style=for-the-badge)](docs/original-brainstorm-readme.md)
+<p align="center">
+  <a href="docs/original-brainstorm-readme.md"><img alt="Original Brainstorm README" src="https://img.shields.io/badge/Original%20Brainstorm%20README-Open-4285F4?style=for-the-badge"></a>
+</p>
+
+<p align="center">
+  <a href="#traditional-chinese"><kbd>繁體中文</kbd></a>
+  <a href="#simplified-chinese"><kbd>简体中文</kbd></a>
+  <a href="#english"><kbd>English</kbd></a>
+</p>
 
 ![Brianstormmm frontend command center](docs/images/frontend-command-center.png)
 
+<a id="traditional-chinese"></a>
+
 ## 繁體中文
+
+<p align="center">
+  <a href="#traditional-chinese"><kbd>繁體中文</kbd></a>
+  <a href="#simplified-chinese"><kbd>简体中文</kbd></a>
+  <a href="#english"><kbd>English</kbd></a>
+</p>
 
 ### 專案定位
 
@@ -154,7 +170,15 @@ MATSim 第一階段建議只傳營運摘要，不把模擬器內部細節搬到�
 
 ---
 
+<a id="simplified-chinese"></a>
+
 ## 简体中文
+
+<p align="center">
+  <a href="#traditional-chinese"><kbd>繁體中文</kbd></a>
+  <a href="#simplified-chinese"><kbd>简体中文</kbd></a>
+  <a href="#english"><kbd>English</kbd></a>
+</p>
 
 ### 项目定位
 
@@ -282,7 +306,15 @@ MATSim 第一阶段建议只传运营摘要，不把仿真器内部细节搬到�
 
 ---
 
+<a id="english"></a>
+
 ## English
+
+<p align="center">
+  <a href="#traditional-chinese"><kbd>繁體中文</kbd></a>
+  <a href="#simplified-chinese"><kbd>简体中文</kbd></a>
+  <a href="#english"><kbd>English</kbd></a>
+</p>
 
 ### Project Positioning
 
