@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-05-11T12:20:18.955042+00:00",
+  "status": "real_blender_render_generated",
+  "blenderVersion": "4.3.2",
+  "inputs": {
+    "heightmap": "public/assets/geospatial/hk-gee-dem-heightmap.png",
+    "texture": "public/assets/geospatial/hk-gee-sentinel2-texture.png",
+    "geeManifest": "public/assets/geospatial/manifest.json"
+  },
+  "outputs": {
+    "render": "public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png",
+    "model": "public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb"
+  },
+  "terrain": {
+    "meshGridSize": 176,
+    "verticalScale": 1.05,
+    "sourceBounds": [
+      113.82,
+      22.13,
+      114.46,
+      22.58
+    ],
+    "mode": "real Sentinel-2 satellite texture draped over smoothed DEM terrain"
+  },
+  "limitations": [
+    "No building-height extrusion is generated until official Hong Kong building height data is supplied.",
+    "The GLB is a visual asset for the frontend, not an engineering collision mesh."
+  ]
+}

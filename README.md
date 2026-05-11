@@ -1,591 +1,418 @@
-# 无人机物资配送路线规划平台方案
+# Brianstormmm Frontend Command Center
 
-## 1. 项目背景
+Frontend command-center dashboard for the ITSuav drone delivery project. The current build focuses on an HKSTP-style operations screen for drone food/material delivery, with a real Hong Kong terrain asset pipeline and reserved interfaces for the algorithm and backend teams.
 
-无人机物资运送的路线规划。
+![Brianstormmm frontend command center](docs/images/frontend-command-center.png)
 
-场景设定在香港，配送站点同时覆盖市区和山区，因此路线规划会面临比普通地面配送更复杂的问题，包括:
+## Current Status
 
-- 市区高楼密集，飞行限制多，环境动态变化快
-- 山区地形复杂，风力、海拔、信号等因素影响较大
-- 不同站点之间的距离、载重、电量消耗、紧急程度不同
-- 无人机需要在安全、效率、成本之间取得平衡
+- Frontend: React + TypeScript + Vite dashboard is implemented.
+- Central digital twin: interactive Three.js local-scene terrain with mouse drag, mouse-wheel zoom, bounded pan, and constrained 3D orbit rotation.
+- Geospatial assets: generated from real Google Earth Engine datasets for the Hong Kong study area.
+- Blender assets: generated from the real GEE heightmap and Sentinel-2 texture.
+- Route planning: reserved for algorithm-team output; no frontend mock route is presented as a validated route.
+- MATSim: reserved as a later integration slot; not implemented in the frontend yet.
+- Operational numbers: current values are frontend placeholders and should become live values after the company/backend data APIs are available.
 
-构建一个 Web 端平台，用于完成无人机配送任务的可视化管理、智能路线规划、模拟调度与结果分析。
+## Quick Start
 
----
+### One-Click Local Open
 
-## 2. 项目目标
+On this Windows workstation, a desktop shortcut has been created:
 
-### 2.1 业务目标
+```text
+C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
+```
 
-- 提高物资配送效率
-- 降低人工调度成本
-- 缩短紧急物资响应时间
-- 提升山区和复杂城区的配送可达性
+It runs the repository launcher script and opens the dashboard in the browser. If the Vite dev server is not already running on port `5174`, the script starts it first.
 
-### 2.2 技术目标
+Equivalent command:
 
-- 构建一个可视化 Web 平台
-- 实现基础的无人机路线规划算法
-- 支持多站点、多任务、多约束条件下的路径计算
-- 展示任务调度、路径结果和关键指标
+```powershell
+Set-Location 'D:\ITSuav\Brianstormmm'
+npm run open
+```
 
-### 2.3 展示目标
+### Manual Development Start
 
-- 页面清晰、逻辑完整、适合比赛演示
-- 能通过地图、图表、任务看板直观展示效果
-- 能对比“人工调度”与“智能调度”的差异
+```powershell
+Set-Location 'D:\ITSuav\Brianstormmm'
+npm install
+npm run dev -- --host 127.0.0.1 --port 5174
+```
 
-### 2.4 团队协作目标
+Open:
 
-- 六个人分工明确
-- 前后端、算法、数据、产品、汇报同步推进
-- 在有限时间内做出一个可演示、可讲述、可答辩的成果
+```text
+http://127.0.0.1:5174/?v=latest
+```
 
----
+### Build And Check
 
-## 3. 我们要解决的核心问题
+```powershell
+Set-Location 'D:\ITSuav\Brianstormmm'
+npm run build
+npm run lint
+```
 
-无人机配送不是简单的“从 A 飞到 B”，而是一个带有多重约束的路径优化问题。平台需要重点解决以下几类问题:
+The build currently passes. Vite may warn that the main JavaScript chunk is larger than 500 kB because Three.js is included for the interactive 3D viewport. This is not a runtime failure; it can be optimized later with route-level or component-level code splitting.
 
-### 3.1 路径规划问题
+## Frontend Technical Highlights
 
-- 怎样从起点到终点选择更优路线
-- 怎样避开禁飞区、高楼密集区或高风险区域
-- 怎样兼顾飞行距离、时间、电量消耗和安全性
+### Command-Center UI
 
-### 3.2 多任务调度问题
+- Dark operations dashboard tuned for large-screen monitoring rather than a marketing landing page.
+- Trilingual interface: English, Simplified Chinese, Traditional Chinese.
+- Google-inspired accent palette for operational state, but the UI avoids noisy multicolor striping.
+- Dense panels for fleet readiness, route intake, operations tools, partner interfaces, metrics, and workflow timing.
+- Visible operator controls are intentionally high-level: new order, dispatch fleet, import route, airspace check, kitchen window, and return to base.
 
-- 多架无人机如何分配多个配送任务
-- 紧急任务是否需要插队
-- 不同任务优先级如何影响整体调度
+### Interactive 3D Digital Twin
 
-### 3.3 场景差异问题
+The central viewport is implemented in `src/components/DigitalTwinViewport.tsx`.
 
-- 市区更关注障碍密度、空域限制、路径绕行
-- 山区更关注地形起伏、续航能力、天气和通信稳定性
+- Uses Three.js and `OrbitControls`.
+- Samples the real GEE DEM heightmap in-browser to generate a terrain mesh.
+- Drapes the real Sentinel-2 texture over the terrain mesh.
+- Uses a `z-up` camera convention closer to GIS local-scene tools.
+- Allows mouse drag, mouse-wheel zoom, bounded panning, and constrained orbit rotation.
+- Keeps the Blender render as a loading fallback only, so the 3D scene does not visually double-stack with the render.
+- Includes a reset-view button for presentation recovery.
 
-### 3.4 管理可视化问题
+### Typed Frontend Contracts
 
-- 企业管理者如何看到当前任务状态
-- 调度人员如何快速调整异常任务
-- 平台如何展示优化前后效率提升
+Domain models live in `src/domain/models.ts`:
 
----
+- `Drone`
+- `DroneStatus`
+- `DroneRouteCandidate`
+- `RouteWaypoint`
+- `RoutePlanningStatus`
+- `MissionEvent`
+- `Metric`
+- geospatial and digital-twin asset records
 
-## 4. 平台整体定位
+These types are the frontend boundary for algorithm and backend handoff. The UI should consume API data by converting API payloads into these typed models.
 
-我们要做的是一个“无人机配送智能调度与路线规划平台”。
+### Asset Registry
 
-平台建议分为 4 个核心模块:
+The asset registry lives in `src/data/assetRegistry.ts` and separates:
 
-### 4.1 地图与站点管理模块
+- real generated assets,
+- required future official datasets,
+- blocked future visual layers,
+- route/MATSim interfaces that must wait for algorithm-team or backend outputs.
 
-- 在地图上展示香港市区与山区站点
-- 标注仓库、配送点、中转点
-- 展示禁飞区、高风险区域、山地区域等信息
+## Data Sources And Provenance
 
-### 4.2 任务管理模块
+The frontend uses real data for geospatial and terrain visuals. It does not invent building extrusion, official airspace restrictions, or validated routes.
 
-- 创建配送任务
-- 设置起点、终点、物资类型、重量、时限、优先级
-- 查看任务状态: 待分配、配送中、已完成、异常
+### Google Earth Engine Products
 
-### 4.3 智能规划模块
+Generated by `scripts/export_gee_assets.py`.
 
-- 根据任务自动生成推荐路线
-- 支持单任务最短路径和多任务调度
-- 结合约束条件生成更合理的飞行方案
+Study bounds:
 
-### 4.4 数据分析与决策展示模块
+```text
+Hong Kong regional bounds: 113.82, 22.13, 114.46, 22.58
+```
 
-- 展示总配送时间、平均时长、成功率、能耗估计
-- 对比优化前后路径差异
-- 展示不同区域任务压力和无人机利用率
+Current datasets:
 
----
+- `COPERNICUS/DEM/GLO30`: 30 m DEM used as heightmap source.
+- `COPERNICUS/S2_SR_HARMONIZED`: Sentinel-2 surface reflectance used as true-color satellite terrain texture.
+- `JRC/GSW1_4/GlobalSurfaceWater`: water occurrence used in the screening risk layer.
+- `ee.Terrain.slope(COPERNICUS/DEM/GLO30)`: slope layer used for terrain screening.
+- NDVI from Sentinel-2 bands `B8` and `B4`: vegetation input for screening.
 
-## 5. 一步一步怎么做
+Generated files:
 
-为了让项目真正落地，建议按照“先讲清问题，再做可演示产品”的思路推进。
+- `public/assets/geospatial/hk-gee-dem-heightmap.png`
+- `public/assets/geospatial/hk-gee-sentinel2-texture.png`
+- `public/assets/geospatial/hk-gee-slope.png`
+- `public/assets/geospatial/hk-gee-risk-surface.png`
+- `public/assets/geospatial/manifest.json`
 
-### 第一阶段: 明确题目与展示边界
+Limitations:
 
-这一阶段的目标不是立刻写代码，而是统一全队认知。
+- Copernicus DEM is regional 30 m data, not LiDAR-grade engineering terrain.
+- Sentinel-2 is suitable for regional context, not close-range infrastructure inspection.
+- The risk surface is a frontend screening layer, not an algorithm-approved route planner.
+- Final drone operations need official airspace, obstacle, weather, building-height, and permission data.
 
-要完成的事情:
+### Blender Outputs
 
-- 明确企业痛点到底是什么
-- 明确你们比赛更看重“算法创新”还是“平台展示”
-- 统一平台场景: 重点做应急物资配送，还是日常多点配送
-- 明确最终交付物: 平台 Demo、方案文档、答辩 PPT、演示视频
+Generated by `scripts/render_blender_terrain.py` from the GEE heightmap and Sentinel-2 texture.
 
-输出成果:
+Generated files:
 
-- 一页问题定义
-- 一页目标用户与使用场景
-- 一页平台功能范围
+- `public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png`
+- `public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb`
+- `public/assets/drone-twin/hkstp/blender-manifest.json`
 
-### 第二阶段: 设计业务流程
+The Blender render is used as a fallback and documentation-quality visual asset. The browser digital twin now builds its own interactive mesh from the same real DEM and satellite texture sources.
 
-这一阶段要让评委看到“企业怎么用你们的平台”。
+### Required Future Official Data
 
-建议梳理一条完整业务链:
+The following should not be faked in the frontend:
 
-1. 管理员录入站点信息
-2. 调度员创建配送任务
-3. 系统读取任务约束条件
-4. 算法生成路线与任务分配方案
-5. 平台地图展示飞行路径
-6. 管理员查看结果并做调整
-7. 系统统计任务表现并输出分析报表
+- Hong Kong official building footprints with reliable heights.
+- No-fly zones, restricted airspace, helipad/airport buffers, and temporary restrictions.
+- Utility obstacles, cranes, terrain hazards, and delivery landing constraints.
+- Weather, wind, rain, visibility, and alert feeds.
+- Company telemetry, order, drone, route, and dispatch APIs.
 
-输出成果:
+## Frontend Maintenance Guide
 
-- 一张业务流程图
-- 一张用户操作流程图
-- 一份核心页面草图
+### Daily Development Loop
 
-### 第三阶段: 定义平台功能
+```powershell
+Set-Location 'D:\ITSuav\Brianstormmm'
+npm install
+npm run open
+```
 
-在这个阶段，需要从“想法”收敛到“比赛版本必须做什么”。
+Then edit files under `src/`. Vite updates the browser automatically while the dev server is running.
 
-建议把功能分为三层:
+Before handing work to teammates:
 
-#### 必做功能
+```powershell
+npm run build
+npm run lint
+```
 
-- 地图展示站点与区域
-- 创建配送任务
-- 输入任务约束条件
-- 自动生成路线
-- 展示路径结果
-- 展示基础数据统计
+### Where To Edit Common Things
 
-#### 加分功能
+- Main layout: `src/App.tsx`
+- Dashboard styling: `src/App.css`
+- Global browser styles: `src/index.css`
+- Central 3D viewport: `src/components/DigitalTwinViewport.tsx`
+- UI text and languages: `src/i18n/translations.ts`
+- Placeholder operational data: `src/data/commandCenterData.ts`
+- Asset paths and readiness state: `src/data/assetRegistry.ts`
+- Shared frontend contracts: `src/domain/models.ts`
 
-- 多架无人机协同调度
-- 紧急任务优先插入
-- 风险区域动态绕行
-- 优化前后对比分析
+### Updating Text
 
-#### 可选展示功能
+Change display copy in `src/i18n/translations.ts`. Keep English, Simplified Chinese, and Traditional Chinese synchronized when adding new labels.
 
-- 任务回放动画
-- 大屏数据驾驶舱
-- 不同天气场景模拟
+Do not put technical pipeline details such as GEE, Blender, GLB, manifest, or prompt wording into the operator-facing dashboard unless the screen is explicitly changed into a developer/debug view.
 
-### 第四阶段: 搭建技术方案
+### Updating Placeholder Numbers
 
-这一阶段进入实际开发准备。
+Current fleet batteries, order counts, readiness values, and SLA values are placeholders. Until real APIs arrive, keep them clearly treated as demonstration values.
 
-你们可以采用前后端分离的方式:
+When backend APIs are available, replace static imports from `src/data/commandCenterData.ts` with a typed data service, for example:
 
-- 前端负责页面、地图、图表、交互展示
-- 后端负责任务管理、数据接口、调度逻辑调用
-- 算法模块负责路线规划和任务分配
-- 数据模块负责站点数据、区域数据和测试样本整理
+```text
+src/services/operationsApi.ts
+src/services/routeApi.ts
+src/services/telemetryApi.ts
+```
 
-### 第五阶段: 先做最小可用版本
+The service layer should return the existing domain models, so the visual components do not need to know backend response details.
 
-比赛项目最怕做得太大、最后什么都没做完整。因此建议先做 MVP。
+### Updating GEE Assets
 
-MVP 版本建议只保证以下链路跑通:
+1. Configure `.env` from `.env.example`.
+2. Do not commit `.env`.
+3. Authenticate Earth Engine locally if needed.
+4. Run:
 
-1. 地图上展示站点
-2. 用户输入一个配送任务
-3. 系统生成一条推荐路线
-4. 页面展示路线和关键指标
+```powershell
+npm run assets:gee
+npm run assets:verify
+```
 
-只要这条链路能跑通，你们就已经有一个可演示原型。之后再逐步加多任务调度、对比分析和可视化优化。
+If bounds or date ranges change, update constants in `scripts/export_gee_assets.py` and regenerate the asset manifest.
 
-### 第六阶段: 完善演示与答辩材料
+### Updating Blender Assets
 
-比赛最终比的不只是功能，还包括表达。
+Blender 4.3 is expected on this workstation. The launcher handles the Windows path containing spaces.
 
-这一阶段需要补齐:
+```powershell
+npm run assets:blender
+npm run assets:verify
+```
 
-- 项目背景与痛点分析
-- 解决方案架构图
-- 算法思路说明
-- 平台界面截图
-- 应用价值与落地前景
-- 团队分工与开发过程
+Only regenerate Blender assets after GEE assets are up to date.
 
----
+### Updating The README Screenshot
 
-## 6. 平台应该怎么搭建
+Start the app, open the latest dashboard, then capture a full-page screenshot to:
 
-## 6.1 推荐技术架构
+```text
+docs/images/frontend-command-center.png
+```
 
-为了兼顾开发效率和展示效果，建议使用以下技术组合:
+The current screenshot was captured from the local Vite page at a desktop viewport.
 
-### 前端
+## Algorithm And Backend Integration Plan
 
-- `React` 或 `Vue`
-- 地图组件可使用 `Mapbox`、`Leaflet` 或高德/天地图方案
-- 图表可使用 `ECharts`
-- UI 组件库可使用 `Ant Design` 或 `Element Plus`
+The frontend should integrate through typed adapters instead of letting components call raw APIs directly.
 
-### 后端
+### Phase 1: Confirm API Contracts
 
-- `Node.js + Express/NestJS`
-- 或 `Python + FastAPI`
+Backend and algorithm teams should confirm these payload groups:
 
-如果队里 Python 更强，建议优先 `FastAPI`，因为后续算法集成会更自然。
+- fleet status and drone telemetry,
+- delivery orders and kitchen readiness,
+- route planning result packages,
+- MATSim scenario/run summaries,
+- airspace and weather constraints,
+- operator action responses.
 
-### 算法模块
+The frontend models in `src/domain/models.ts` are the first schema reference. If backend payloads differ, create adapter functions instead of weakening the frontend types.
 
-- 使用 `Python`
-- 可先实现基础最短路径算法
-- 再逐步加入约束优化、任务优先级、多机调度
+### Phase 2: Route Planning Interface
 
-### 数据层
+Route planner output should map to `DroneRouteCandidate`:
 
-- 比赛原型阶段可以先用 `JSON` 或 `SQLite`
-- 如果时间充足再接入 `MySQL` 或 `PostgreSQL`
+```json
+{
+  "id": "route-2026-001",
+  "name": "HKSTP to delivery site",
+  "status": "candidate",
+  "source": "algorithm_interface",
+  "distanceKm": 12.4,
+  "estimatedMinutes": 18,
+  "riskScore": 0.31,
+  "waypoints": [
+    {
+      "sequence": 1,
+      "action": "launch",
+      "label": "HKSTP launch deck",
+      "latitude": 22.4269,
+      "longitude": 114.2122,
+      "altitudeMeters": 18
+    }
+  ]
+}
+```
 
----
+Allowed route statuses:
 
-## 6.2 推荐系统架构
+- `algorithm_pending`
+- `candidate`
+- `approved`
+- `active`
 
-可以按下面思路设计:
+Frontend behavior:
 
-### 前端层
+- `algorithm_pending`: show interface waiting state.
+- `candidate`: show route preview and operator review state.
+- `approved`: allow dispatch preparation.
+- `active`: show live execution or replay state.
 
-- 地图展示页面
-- 任务管理页面
-- 数据分析页面
-- 系统总览首页
+### Phase 3: MATSim Interface
 
-### 服务层
+MATSim should provide scenario-level summaries rather than raw simulator internals in the first frontend integration.
 
-- 用户请求接口
-- 任务管理接口
-- 路线规划接口
-- 数据统计接口
+Suggested fields:
 
-### 算法层
+- scenario ID and name,
+- run status,
+- simulated time window,
+- demand/order set reference,
+- corridor/network reference,
+- route assignment summary,
+- travel-time comparison,
+- congestion or delay indicators,
+- recommended dispatch window.
 
-- 单路径规划
-- 多任务分配
-- 路径评分模型
+The dashboard should display MATSim as operational guidance, not as a technical simulator console.
 
-### 数据层
+### Phase 4: Backend Service Layer
 
-- 站点数据
-- 区域数据
-- 任务数据
-- 无人机参数数据
+Recommended frontend service layout:
 
----
+```text
+src/services/httpClient.ts
+src/services/operationsApi.ts
+src/services/fleetTelemetryApi.ts
+src/services/routePlanningApi.ts
+src/services/matsimApi.ts
+src/services/geospatialApi.ts
+```
 
-## 6.3 页面建议
+Recommended runtime behavior:
 
-比赛版本建议至少做 4 个页面:
+- Read base URLs from Vite environment variables such as `VITE_API_BASE_URL`.
+- Validate API responses at the boundary before rendering.
+- Convert raw payloads into domain models.
+- Show user-friendly offline or pending states when an API is unavailable.
+- Keep secrets and private API tokens outside frontend code.
 
-### 1. 首页 / 总览页
+### Phase 5: Real-Time Updates
 
-- 展示项目介绍
-- 展示今日任务数、完成率、平均配送时长等指标
-- 展示区域热力或任务分布
+For live operations, use one of these patterns after backend capability is known:
 
-### 2. 地图调度页
+- polling for early demos,
+- Server-Sent Events for one-way operational feeds,
+- WebSocket for bidirectional control-room state,
+- MQTT bridge only through a backend gateway, not directly from the browser to private drone infrastructure.
 
-- 地图展示站点、路径、禁飞区
-- 支持任务选择
-- 点击后展示推荐路线和飞行信息
+The current demo numbers should then become live data streams.
 
-### 3. 任务管理页
+## Repository Structure
 
-- 新建任务
-- 查看任务列表
-- 设置优先级、物资重量、时限
+```text
+src/
+  components/      Interactive frontend components
+  data/            Placeholder operational data and asset registry
+  domain/          Shared TypeScript models and frontend contracts
+  i18n/            English, Simplified Chinese, Traditional Chinese copy
+  App.tsx          Main command-center layout
+  App.css          Dashboard styling
+scripts/
+  export_gee_assets.py        Real GEE product export
+  render_blender_terrain.py   Blender terrain render and GLB export
+  run_blender_assets.mjs      Windows-safe Blender launcher
+  verify_assets.py            Asset existence and nonblank checks
+  open-frontend.ps1           Local frontend launcher
+docs/
+  FINAL_PLAN.md               Delivery boundary and implementation plan
+  INTEGRATION_CONTRACTS.md    Algorithm, MATSim, geospatial integration contracts
+  images/                     README screenshots
+data/requirements/
+  missing-official-layers.md  Required future official datasets
+public/assets/
+  geospatial/                 GEE-generated PNGs and manifest
+  drone-twin/hkstp/           Blender-generated render, GLB, and manifest
+```
 
-### 4. 数据分析页
+## Verification Checklist Before Push
 
-- 展示配送效率变化
-- 展示优化前后对比
-- 展示不同区域任务完成情况
+```powershell
+npm run assets:verify
+npm run build
+npm run lint
+git status --short
+```
 
----
+Also check:
 
-## 7. 算法部分怎么讲
+- `.env` is not staged.
+- `node_modules/` and `dist/` are not staged.
+- generated real assets under `public/assets/` are intentionally included only if the team wants the demo to run without regenerating assets.
+- screenshots under `docs/images/` are current.
+- no API keys, account emails, private tokens, or service-account JSON files are committed.
 
-比赛中不一定要求把算法做到特别学术，但一定要讲清楚“为什么这样规划”。
+## Deployment Notes
 
-建议按照“由浅入深”的方式设计:
+This is currently a static Vite frontend. It can be deployed to GitHub Pages, Azure Static Web Apps, Vercel, Netlify, or an internal static server after API base URLs are finalized.
 
-### 7.1 第一层: 基础路径规划
+For production integration, prefer:
 
-- 根据站点间距离构建图结构
-- 用最短路径算法找到推荐路线
+- static frontend build from `npm run build`,
+- backend API gateway for private data and authentication,
+- environment-specific `VITE_*` variables injected at build time,
+- no direct browser access to drone-control secrets or private infrastructure.
 
-适合先快速实现、便于展示。
+## Current Caveats
 
-### 7.2 第二层: 加入约束条件
-
-在基础路径上加入:
-
-- 电量限制
-- 载重限制
-- 任务时限
-- 禁飞区绕行
-- 风险区域惩罚
-
-这样平台就能体现“不是最短，而是更合理”。
-
-### 7.3 第三层: 多任务调度
-
-- 多架无人机同时执行任务
-- 根据优先级和距离进行任务分配
-- 提升总体效率
-
-### 7.4 比赛里怎么表达算法价值
-
-你们不一定非要强调“算法多先进”，而是要强调:
-
-- 规划速度更快
-- 路线更安全
-- 资源利用率更高
-- 对复杂城市场景和山区场景更适配
-
----
-
-## 8. 六个人怎么分工
-
-六个人团队最重要的是分工明确、接口清晰、同步频繁。建议按“产品 + 前端 + 后端 + 算法 + 数据 + 汇报”来分。
-
-### 成员 1: 项目负责人 / 产品统筹
-
-负责内容:
-
-- 整体方案统筹
-- 功能范围把控
-- 比赛材料整理
-- 进度推进与任务协调
-
-产出:
-
-- 项目说明文档
-- 功能清单
-- 时间计划表
-- 最终答辩主线
-
-### 成员 2: 前端开发 1
-
-负责内容:
-
-- 平台整体页面框架
-- 首页、总览页、导航结构
-- UI 风格统一
-
-产出:
-
-- Web 页面骨架
-- 首页与总览展示
-
-### 成员 3: 前端开发 2
-
-负责内容:
-
-- 地图页开发
-- 路线展示
-- 图表和交互细节
-
-产出:
-
-- 地图调度页面
-- 路径可视化效果
-- 数据图表展示
-
-### 成员 4: 后端开发
-
-负责内容:
-
-- 接口设计
-- 任务管理逻辑
-- 前后端数据联调
-
-产出:
-
-- 任务接口
-- 路线规划调用接口
-- 数据返回结构
-
-### 成员 5: 算法与模型开发
-
-负责内容:
-
-- 路线规划算法实现
-- 多任务分配逻辑
-- 约束条件建模
-
-产出:
-
-- 算法原型
-- 路径评分逻辑
-- 优化结果说明
-
-### 成员 6: 数据与汇报材料负责人
-
-负责内容:
-
-- 整理香港站点与模拟任务数据
-- 做测试样本
-- 协助 PPT、答辩稿、演示脚本制作
-
-产出:
-
-- 数据样例
-- 测试案例
-- PPT 素材
-- 演示文稿
-
----
-
-## 9. 六个人如何协作推进
-
-建议把项目分为 4 个并行小组，但保持每日同步:
-
-### A 组: 产品与汇报
-
-- 成员 1 + 成员 6
-- 负责需求梳理、文档、PPT、答辩逻辑
-
-### B 组: 前端展示
-
-- 成员 2 + 成员 3
-- 负责 Web 页面、地图、图表、交互
-
-### C 组: 后端服务
-
-- 成员 4
-- 负责接口和系统支撑
-
-### D 组: 算法模型
-
-- 成员 5
-- 负责路径规划与调度逻辑
-
-协作方式建议:
-
-- 每天固定一次 15 分钟站会
-- 先统一数据结构，再分别开发
-- 前端先用假数据开发页面
-- 后端和算法先定义接口格式
-- 最后集中联调和演示彩排
-
----
-
-## 10. 推荐开发节奏
-
-如果比赛时间比较紧，可以按下面节奏推进:
-
-### 第 1 天: 明确方案
-
-- 确定题目切入点
-- 明确平台功能范围
-- 画出业务流程与页面草图
-- 确定技术栈和分工
-
-### 第 2 到 3 天: 完成核心开发
-
-- 前端完成页面框架
-- 后端完成任务接口
-- 算法完成基础路径规划
-- 数据准备完成
-
-### 第 4 天: 联调与优化
-
-- 打通任务输入到路径展示的完整流程
-- 修复页面和接口问题
-- 补充图表和说明内容
-
-### 第 5 天: 完成比赛材料
-
-- 做 PPT
-- 录演示视频
-- 写答辩稿
-- 进行模拟答辩
-
----
-
-## 11. 比赛展示时怎么讲
-
-你们的讲述逻辑建议按下面顺序展开:
-
-### 11.1 先讲痛点
-
-香港市区高密度建筑和山区复杂地形并存，传统人工调度难以兼顾效率、安全与时效，因此企业在无人机配送中面临复杂路线规划问题。
-
-### 11.2 再讲解决方案
-
-我们构建了一个 Web 端无人机配送智能调度平台，通过地图可视化、任务管理和智能规划算法，帮助企业更高效地完成复杂场景下的物资运输。
-
-### 11.3 再讲核心亮点
-
-- 城市与山区混合场景
-- 路线规划与任务调度结合
-- 平台化展示而非单点算法
-- 可视化强，适合企业应用和比赛演示
-
-### 11.4 最后讲价值
-
-- 提高配送效率
-- 降低调度成本
-- 提升紧急响应能力
-- 具备未来落地扩展空间
-
----
-
-## 12. 现阶段最建议你们优先做的事
-
-如果你们现在刚开始，最优先做的不是把所有功能都写出来，而是先完成这 5 件事:
-
-1. 明确一个清晰场景
-   例如: 山区医疗物资应急配送，或者市区与山区混合配送
-
-2. 画出平台结构
-   至少明确有哪些页面、页面之间怎么跳转
-
-3. 定义核心数据
-   包括站点、任务、无人机、路线结果等数据结构
-
-4. 先做最小 Demo
-   实现“输入任务 -> 生成路线 -> 地图展示结果”
-
-5. 同步准备答辩材料
-   比赛项目通常不是代码做完再准备 PPT，而是开发和表达同步进行
-
----
-
-## 13. 总结
-
-这次比赛的关键，不是单纯做一个算法，而是围绕企业痛点，做出一个有业务逻辑、有技术支撑、有展示效果的平台型方案。
-
-对于你们六个人的小组来说，最合理的策略是:
-
-- 用一个明确场景聚焦问题
-- 用一个 Web 平台承载解决方案
-- 用一个可解释的算法体现技术能力
-- 用清晰分工保证推进效率
-- 用强表达能力提升比赛呈现效果
-
-一句话概括你们的方向:
-
-> 以香港复杂城市场景为背景，构建一个面向企业无人机物资配送的智能路线规划与调度 Web 平台，实现任务管理、路径优化和可视化决策支持的一体化解决方案。
-
----
-
-## 14. 后续可继续补充的内容
-
-这份文档可以继续往下扩展为正式比赛方案书，后续建议补充:
-
-- 项目名称
-- 目标企业画像
-- 更具体的算法说明
-- 页面原型图
-- 系统架构图
-- 数据表设计
-- 答辩 PPT 提纲
+- Route optimization is not implemented in the frontend.
+- MATSim is not implemented in the frontend.
+- Existing numeric values are placeholder display data until company APIs are available.
+- The current terrain is real regional data, but not aviation-grade engineering data.
+- Official building-height and airspace datasets are still required before city-scale extrusion or operational clearance can be represented truthfully.

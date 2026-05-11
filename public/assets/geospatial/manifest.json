@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-05-11T11:47:16.285274+00:00",
+  "bounds": [
+    113.82,
+    22.13,
+    114.46,
+    22.58
+  ],
+  "region": "Hong Kong regional drone delivery study area",
+  "dateRange": {
+    "sentinel2Start": "2024-01-01",
+    "sentinel2End": "2026-05-11"
+  },
+  "status": "real_gee_products_generated",
+  "products": [
+    {
+      "name": "Copernicus DEM heightmap",
+      "filename": "hk-gee-dem-heightmap.png",
+      "dataset": "COPERNICUS/DEM/GLO30",
+      "description": "Grayscale elevation source used as Blender terrain displacement."
+    },
+    {
+      "name": "Sentinel-2 satellite texture",
+      "filename": "hk-gee-sentinel2-texture.png",
+      "dataset": "COPERNICUS/S2_SR_HARMONIZED",
+      "description": "Cloud-filtered median true-color texture for terrain draping."
+    },
+    {
+      "name": "Terrain slope",
+      "filename": "hk-gee-slope.png",
+      "dataset": "ee.Terrain.slope(COPERNICUS/DEM/GLO30)",
+      "description": "Slope layer for mountain risk and landing suitability screening."
+    },
+    {
+      "name": "Composite risk surface",
+      "filename": "hk-gee-risk-surface.png",
+      "dataset": "Slope + Sentinel-2 NDVI + JRC water occurrence",
+      "description": "Screening-level operational risk surface; not an algorithm-approved route."
+    }
+  ],
+  "attribution": [
+    "Copernicus DEM GLO-30 via Google Earth Engine",
+    "Copernicus Sentinel-2 Surface Reflectance via Google Earth Engine",
+    "JRC Global Surface Water via Google Earth Engine"
+  ],
+  "limitations": [
+    "Copernicus DEM is a 30 m global DEM and is not a LiDAR-grade Hong Kong engineering DTM.",
+    "Sentinel-2 is suitable for regional visual context but not close-range inspection.",
+    "The risk surface is a frontend screening layer, not a validated route planner."
+  ]
+}
