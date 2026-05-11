@@ -12,6 +12,10 @@
 
 ![Brianstormmm frontend command center](docs/images/frontend-command-center.png)
 
+<p align="center">
+  <a href="https://itsuav.github.io/Brianstormmm/"><img alt="Open hosted frontend" src="https://img.shields.io/badge/Open%20Hosted%20Frontend-GitHub%20Pages-34A853?style=for-the-badge"></a>
+</p>
+
 <a id="traditional-chinese"></a>
 
 ## 繁體中文
@@ -39,6 +43,14 @@ Brianstormmm Frontend Command Center 是 ITSuav 無人機配送專案的前端�
 - 大屏數字：目前為前端展示佔位資料，待取得公司資料 API 後替換為即時動態資料。
 
 ### 快速開啟
+
+全隊可直接開啟 GitHub Pages 版本：
+
+```text
+https://itsuav.github.io/Brianstormmm/
+```
+
+本機開發與調試可使用桌面快捷方式：
 
 桌面已建立快捷方式：
 
@@ -198,6 +210,14 @@ Brianstormmm Frontend Command Center 是 ITSuav 无人机配送项目的前端�
 
 ### 快速打开
 
+全队可直接打开 GitHub Pages 版本：
+
+```text
+https://itsuav.github.io/Brianstormmm/
+```
+
+本机开发与调试可使用桌面快捷方式：
+
 桌面已创建快捷方式：
 
 ```text
@@ -333,6 +353,14 @@ The original Brainstorm project README is preserved at [docs/original-brainstorm
 - Dashboard numbers: current values are frontend placeholders and should become live values after company data APIs are available.
 
 ### Quick Start
+
+The full team can open the hosted GitHub Pages version directly:
+
+```text
+https://itsuav.github.io/Brianstormmm/
+```
+
+For local development and debugging, use the desktop shortcut on this workstation:
 
 A desktop shortcut has been created on this workstation:
 
