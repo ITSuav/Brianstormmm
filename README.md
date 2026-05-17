@@ -50,9 +50,24 @@ Brianstormmm Frontend Command Center 是 ITSuav 無人機配送專案的前端�
 https://itsuav.github.io/Brianstormmm/
 ```
 
-本機開發與調試可使用桌面快捷方式：
+同事 clone 倉庫後，請用標準 Node 流程啟動，不要直接雙擊 `index.html`：
 
-桌面已建立快捷方式：
+```powershell
+git clone https://github.com/ITSuav/Brianstormmm.git
+Set-Location 'Brianstormmm'
+npm ci
+npm run dev
+```
+
+瀏覽器開啟：
+
+```text
+http://localhost:5174/
+```
+
+`npm run dev` 會固定使用 `5174` 並監聽 `0.0.0.0`，方便後端同事在本機或同一內網測試。若只想在本機回環地址調試，可使用 `npm run dev:local`。
+
+你的工作站也保留了桌面快捷方式：
 
 ```text
 C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
@@ -63,20 +78,6 @@ C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
 ```powershell
 Set-Location 'D:\ITSuav\Brianstormmm'
 npm run open
-```
-
-手動啟動：
-
-```powershell
-Set-Location 'D:\ITSuav\Brianstormmm'
-npm install
-npm run dev -- --host 127.0.0.1 --port 5174
-```
-
-瀏覽器開啟：
-
-```text
-http://127.0.0.1:5174/?v=latest
 ```
 
 ### 前端技術亮點
@@ -216,9 +217,24 @@ Brianstormmm Frontend Command Center 是 ITSuav 无人机配送项目的前端�
 https://itsuav.github.io/Brianstormmm/
 ```
 
-本机开发与调试可使用桌面快捷方式：
+同事 clone 仓库后，请用标准 Node 流程启动，不要直接双击 `index.html`：
 
-桌面已创建快捷方式：
+```powershell
+git clone https://github.com/ITSuav/Brianstormmm.git
+Set-Location 'Brianstormmm'
+npm ci
+npm run dev
+```
+
+浏览器打开：
+
+```text
+http://localhost:5174/
+```
+
+`npm run dev` 会固定使用 `5174` 并监听 `0.0.0.0`，方便后端同事在本机或同一内网测试。如果只想在本机回环地址调试，可以使用 `npm run dev:local`。
+
+你的工作站也保留了桌面快捷方式：
 
 ```text
 C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
@@ -229,20 +245,6 @@ C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
 ```powershell
 Set-Location 'D:\ITSuav\Brianstormmm'
 npm run open
-```
-
-手动启动：
-
-```powershell
-Set-Location 'D:\ITSuav\Brianstormmm'
-npm install
-npm run dev -- --host 127.0.0.1 --port 5174
-```
-
-浏览器打开：
-
-```text
-http://127.0.0.1:5174/?v=latest
 ```
 
 ### 前端技术亮点
@@ -360,9 +362,24 @@ The full team can open the hosted GitHub Pages version directly:
 https://itsuav.github.io/Brianstormmm/
 ```
 
-For local development and debugging, use the desktop shortcut on this workstation:
+After cloning the repository, teammates should use the standard Node workflow. Do not open `index.html` directly:
 
-A desktop shortcut has been created on this workstation:
+```powershell
+git clone https://github.com/ITSuav/Brianstormmm.git
+Set-Location 'Brianstormmm'
+npm ci
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:5174/
+```
+
+`npm run dev` uses port `5174` and listens on `0.0.0.0`, which is friendlier for backend integration and same-LAN testing. Use `npm run dev:local` for loopback-only local debugging.
+
+This workstation also keeps a desktop shortcut:
 
 ```text
 C:\Users\Judy\Desktop\Brianstormmm Frontend.lnk
@@ -373,20 +390,6 @@ Equivalent command:
 ```powershell
 Set-Location 'D:\ITSuav\Brianstormmm'
 npm run open
-```
-
-Manual development start:
-
-```powershell
-Set-Location 'D:\ITSuav\Brianstormmm'
-npm install
-npm run dev -- --host 127.0.0.1 --port 5174
-```
-
-Open:
-
-```text
-http://127.0.0.1:5174/?v=latest
 ```
 
 ### Frontend Technical Highlights
