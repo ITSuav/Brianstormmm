@@ -509,7 +509,7 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
         }
       }
 
-      if (nearestRouteNode && nearestDistance < 140) {
+      if (nearestRouteNode && nearestDistance < 220) {
         setSelectedRouteNode(nearestRouteNode)
       }
     }
@@ -573,7 +573,7 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
           marker.position.z = 0.08
           marker.renderOrder = 16
           marker.userData.routeNode = node
-          const hitTarget = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 12), hitMaterial)
+          const hitTarget = new THREE.Mesh(new THREE.SphereGeometry(0.36, 18, 12), hitMaterial)
           hitTarget.position.z = 0.08
           hitTarget.userData.routeNode = node
           const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.012, 32), baseMaterial)
@@ -586,7 +586,9 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
           const label = createRouteNodeLabel(node, color)
           markerGroup.add(base, stem, marker, hitTarget)
           if (label) {
+            label.userData.routeNode = node
             markerGroup.add(label)
+            clickableMarkers.push(label)
           }
           terrainGroup.add(markerGroup)
           clickableMarkers.push(hitTarget, marker, base, stem)
