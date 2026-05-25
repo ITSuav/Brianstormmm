@@ -67,7 +67,7 @@ const TERRAIN_BASE_Z = -0.18
 const PAN_LIMIT_X = TERRAIN_WIDTH * 0.32
 const PAN_LIMIT_Y = TERRAIN_DEPTH * 0.32
 const MIN_TARGET_HEIGHT = 0.18
-const MAX_TARGET_HEIGHT = 0.74
+const MAX_TARGET_HEIGHT = 1.08
 const EMPTY_RESET = () => undefined
 
 function clampValue(value: number, minValue: number, maxValue: number): number {
@@ -309,19 +309,71 @@ function routeNodeColor(kind: string): number {
   return 0xfbbc04
 }
 
+function routeNodeLabel(node: RouteNode): string {
+  if (node.kind === 'depot') {
+    return 'DEPOT'
+  }
+  if (node.kind === 'charger') {
+    return 'CHG'
+  }
+  if (node.kind === 'destination') {
+    return 'DROP'
+  }
+  return `WP ${node.order + 1}`
+}
+
+function createRouteNodeLabel(node: RouteNode, color: number): THREE.Sprite | undefined {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256
+  canvas.height = 88
+  const context = canvas.getContext('2d')
+  if (!context) {
+    return undefined
+  }
+
+  const accentColor = new THREE.Color(color).getStyle()
+  context.fillStyle = 'rgba(5, 8, 12, 0.86)'
+  context.fillRect(10, 12, 236, 64)
+  context.strokeStyle = accentColor
+  context.lineWidth = 5
+  context.strokeRect(10, 12, 236, 64)
+  context.fillStyle = '#ffffff'
+  context.font = '700 42px sans-serif'
+  context.textAlign = 'center'
+  context.textBaseline = 'middle'
+  context.fillText(routeNodeLabel(node), 128, 45)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.needsUpdate = true
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false })
+  const label = new THREE.Sprite(material)
+  label.name = `route-node-label-${node.id}`
+  label.position.z = 0.48
+  label.scale.set(0.82, 0.28, 1)
+  label.renderOrder = 20
+  return label
+}
+
+function disposeMaterial(material: THREE.Material): void {
+  const textureMap = (material as THREE.Material & { map?: THREE.Texture }).map
+  textureMap?.dispose()
+  material.dispose()
+}
+
 function disposeObject(object: THREE.Object3D): void {
   object.traverse((child) => {
-    if (!(child instanceof THREE.Mesh || child instanceof THREE.Line || child instanceof THREE.LineSegments)) {
+    if (!(child instanceof THREE.Mesh || child instanceof THREE.Line || child instanceof THREE.LineSegments || child instanceof THREE.Sprite)) {
       return
     }
 
     child.geometry.dispose()
     const material = child.material
     if (Array.isArray(material)) {
-      material.forEach((item) => item.dispose())
+      material.forEach(disposeMaterial)
       return
     }
-    material.dispose()
+    disposeMaterial(material)
   })
 }
 
@@ -366,7 +418,7 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
     controls.enablePan = true
     controls.screenSpacePanning = false
     controls.minDistance = 2.45
-    controls.maxDistance = 8.8
+    controls.maxDistance = 11.4
     controls.minPolarAngle = Math.PI * 0.2
     controls.maxPolarAngle = Math.PI * 0.47
     controls.rotateSpeed = 0.78
@@ -400,11 +452,11 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
     scene.add(ambientLight, keyLight, fillLight)
 
     const applyDefaultView = () => {
-      camera.position.set(4.9, -5.5, 4.25)
+      camera.position.set(5.85, -6.85, 5.85)
       camera.near = 0.01
       camera.far = 80
       camera.updateProjectionMatrix()
-      controls.target.set(0, 0, 0.46)
+      controls.target.set(0, 0, 0.62)
       clampControls()
       controls.update()
     }
@@ -498,12 +550,15 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
         rimObject.position.z = 0.04
         terrainGroup.add(rimObject)
 
-        const routeMaterial = new THREE.LineBasicMaterial({ color: 0xfbbc04, transparent: true, opacity: 0.92 })
-        const routePoints = route.line.map(([longitude, latitude]) => coordinateToTerrain(longitude, latitude, bounds, terrainGeometry.heightAt, 0.16))
-        const routeGeometry = new THREE.BufferGeometry().setFromPoints(routePoints)
-        const routeLine = new THREE.Line(routeGeometry, routeMaterial)
-        routeLine.name = 'geojson-route-preview'
-        terrainGroup.add(routeLine)
+        const routeMaterial = new THREE.MeshBasicMaterial({ color: 0xfbbc04, transparent: true, opacity: 0.95, depthTest: false })
+        const routePoints = route.line.map(([longitude, latitude]) => coordinateToTerrain(longitude, latitude, bounds, terrainGeometry.heightAt, 0.28))
+        if (routePoints.length >= 2) {
+          const routeCurve = new THREE.CatmullRomCurve3(routePoints, false, 'catmullrom', 0.2)
+          const routeTube = new THREE.Mesh(new THREE.TubeGeometry(routeCurve, Math.max(24, routePoints.length * 16), 0.022, 8, false), routeMaterial)
+          routeTube.name = 'geojson-route-preview'
+          routeTube.renderOrder = 12
+          terrainGroup.add(routeTube)
+        }
 
         route.nodes.forEach((node) => {
           const markerGroup = new THREE.Group()
@@ -516,16 +571,23 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
           const hitMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
           const marker = new THREE.Mesh(new THREE.SphereGeometry(0.085, 18, 12), markerMaterial)
           marker.position.z = 0.08
+          marker.renderOrder = 16
           marker.userData.routeNode = node
           const hitTarget = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 12), hitMaterial)
           hitTarget.position.z = 0.08
           hitTarget.userData.routeNode = node
           const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.012, 32), baseMaterial)
+          base.renderOrder = 15
           base.userData.routeNode = node
           const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.18, 10), markerMaterial)
           stem.position.z = -0.005
+          stem.renderOrder = 15
           stem.userData.routeNode = node
+          const label = createRouteNodeLabel(node, color)
           markerGroup.add(base, stem, marker, hitTarget)
+          if (label) {
+            markerGroup.add(label)
+          }
           terrainGroup.add(markerGroup)
           clickableMarkers.push(hitTarget, marker, base, stem)
           routeHotspots.push({ object: markerGroup, routeNode: node })

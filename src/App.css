@@ -223,8 +223,8 @@
   position: relative;
   width: 100%;
   min-width: 0;
-  aspect-ratio: 16 / 11;
-  min-height: 500px;
+  aspect-ratio: 4 / 3;
+  min-height: 560px;
   background:
     radial-gradient(circle at 20% 18%, rgba(66, 133, 244, 0.22), transparent 28%),
     radial-gradient(circle at 82% 72%, rgba(52, 168, 83, 0.16), transparent 30%),
@@ -292,9 +292,9 @@
 .route-node-panel {
   position: absolute;
   left: 16px;
-  bottom: 16px;
+  top: 72px;
   z-index: 6;
-  width: min(320px, calc(100% - 32px));
+  width: min(360px, calc(100% - 32px));
   display: grid;
   gap: 10px;
   border: 1px solid rgba(251, 188, 4, 0.48);
@@ -314,12 +314,12 @@
 .route-node-panel span,
 .route-node-panel dt {
   color: #aeb6c6;
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   text-transform: uppercase;
 }
 
 .route-node-panel strong {
-  font-size: 0.98rem;
+  font-size: 1.08rem;
 }
 
 .route-node-panel dl {
@@ -338,6 +338,7 @@
   min-width: 0;
   margin: 0;
   color: #ffffff;
+  font-size: 0.96rem;
   overflow-wrap: anywhere;
 }
 

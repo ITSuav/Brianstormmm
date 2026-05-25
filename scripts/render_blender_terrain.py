@@ -169,12 +169,12 @@ def add_camera_and_lights() -> None:
     camera = bpy.data.cameras.new("command-center-camera")
     camera_object = bpy.data.objects.new("command-center-camera", camera)
     bpy.context.collection.objects.link(camera_object)
-    camera_object.location = (4.45, -5.15, 4.35)
-    target = Vector((0, 0, 0.66))
+    camera_object.location = (4.9, -5.9, 4.9)
+    target = Vector((0, 0, 0.78))
     direction = target - camera_object.location
     camera_object.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
     camera.type = "ORTHO"
-    camera.ortho_scale = 5.55
+    camera.ortho_scale = 6.4
     bpy.context.scene.camera = camera_object
 
     sun = bpy.data.lights.new("low-sun", "SUN")
