@@ -62,12 +62,12 @@ const TERRAIN_WIDTH = 7.2
 const TERRAIN_DEPTH = 5.1
 const GRID_COLUMNS = 384
 const GRID_ROWS = 272
-const HEIGHT_SCALE = 1.5
+const HEIGHT_SCALE = 2.0
 const TERRAIN_BASE_Z = -0.18
 const PAN_LIMIT_X = TERRAIN_WIDTH * 0.32
 const PAN_LIMIT_Y = TERRAIN_DEPTH * 0.32
 const MIN_TARGET_HEIGHT = 0.18
-const MAX_TARGET_HEIGHT = 1.08
+const MAX_TARGET_HEIGHT = 1.48
 const EMPTY_RESET = () => undefined
 
 function clampValue(value: number, minValue: number, maxValue: number): number {
@@ -418,7 +418,7 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
     controls.enablePan = true
     controls.screenSpacePanning = false
     controls.minDistance = 2.45
-    controls.maxDistance = 11.4
+    controls.maxDistance = 13.4
     controls.minPolarAngle = Math.PI * 0.2
     controls.maxPolarAngle = Math.PI * 0.47
     controls.rotateSpeed = 0.78
@@ -452,11 +452,11 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
     scene.add(ambientLight, keyLight, fillLight)
 
     const applyDefaultView = () => {
-      camera.position.set(5.85, -6.85, 5.85)
+      camera.position.set(6.7, -7.8, 7.2)
       camera.near = 0.01
       camera.far = 80
       camera.updateProjectionMatrix()
-      controls.target.set(0, 0, 0.62)
+      controls.target.set(0, 0, 0.92)
       clampControls()
       controls.update()
     }

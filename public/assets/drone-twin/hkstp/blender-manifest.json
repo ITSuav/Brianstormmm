@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T17:30:20.061071+00:00",
+  "generatedAt": "2026-05-25T17:54:51.388319+00:00",
   "status": "real_blender_render_generated",
   "blenderVersion": "4.3.2",
   "inputs": {
@@ -13,7 +13,7 @@
   },
   "terrain": {
     "meshGridSize": 384,
-    "verticalScale": 1.5,
+    "verticalScale": 2.0,
     "baseZ": -0.18,
     "renderResolution": [
       3840,
@@ -21,10 +21,10 @@
     ],
     "renderSamples": 192,
     "sourceBounds": [
-      114.15988109493856,
-      22.41265237922924,
-      114.27651890506144,
-      22.48954762077076
+      114.11128200738735,
+      22.380612695253603,
+      114.32511799261265,
+      22.521587304746397
     ],
     "mode": "solid terrain mesh with real Sentinel-2 satellite texture draped over DEM terrain"
   },

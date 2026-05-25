@@ -32,8 +32,8 @@ SCENE_ASPECT_RATIO = 7.2 / 5.1
 OUTPUT_SIZE = (DIMENSIONS, round(DIMENSIONS / SCENE_ASPECT_RATIO))
 METERS_PER_DEGREE_LATITUDE = 110_540
 MIN_ROUTE_PADDING_METERS = 650
-MIN_SCENE_WIDTH_METERS = 12_000
-ROUTE_PADDING_RATIO = 0.18
+MIN_SCENE_WIDTH_METERS = 22_000
+ROUTE_PADDING_RATIO = 0.28
 DTM_MIN_ELEVATION_METERS = -5
 DTM_MAX_ELEVATION_METERS = 950
 TEXTURE_CONTRAST_FACTOR = 1.08
@@ -341,6 +341,12 @@ def crop_existing_gee_assets(bounds: tuple[float, float, float, float], product_
     if current_bounds == requested_bounds:
         return source_bounds
 
+    source_west, source_south, source_east, source_north = source_bounds
+    target_west, target_south, target_east, target_north = bounds
+    if target_west < source_west or target_south < source_south or target_east > source_east or target_north > source_north:
+        LOGGER.warning("Existing GEE assets do not cover requested route corridor; skipping local crop to avoid texture stretching")
+        return None
+
     for index in product_indices:
         product = PRODUCTS[index]
         path = OUTPUT_DIR / product.filename
@@ -352,7 +358,7 @@ def crop_existing_gee_assets(bounds: tuple[float, float, float, float], product_
             cropped = enhance_satellite_texture(cropped)
         cropped.save(path)
         LOGGER.info("Cropped %s to route corridor", path)
-    return source_bounds
+    return bounds
 
 
 def write_manifest(bounds: tuple[float, float, float, float], processing_mode: str, source_bounds: tuple[float, float, float, float] | None = None, official_dtm: dict[str, object] | None = None) -> None:
@@ -396,6 +402,8 @@ def main() -> None:
     try:
         official_dtm = write_official_dtm_products(bounds)
         source_bounds = crop_existing_gee_assets(bounds, (TEXTURE_PRODUCT_INDEX,))
+        if source_bounds is None:
+            raise RuntimeError("Existing Sentinel-2 texture does not cover requested route corridor")
         write_manifest(bounds, "official_5m_dtm_with_route_corridor_texture", source_bounds, official_dtm)
         return
     except Exception as error:
