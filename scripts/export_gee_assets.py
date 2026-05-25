@@ -12,7 +12,7 @@ from pathlib import Path
 
 import ee
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 import rasterio
 from rasterio.enums import Resampling
 from rasterio.warp import transform_bounds
@@ -32,10 +32,15 @@ SCENE_ASPECT_RATIO = 7.2 / 5.1
 OUTPUT_SIZE = (DIMENSIONS, round(DIMENSIONS / SCENE_ASPECT_RATIO))
 METERS_PER_DEGREE_LATITUDE = 110_540
 MIN_ROUTE_PADDING_METERS = 650
-MIN_SCENE_WIDTH_METERS = 22_000
+MIN_SCENE_WIDTH_METERS = 12_000
 ROUTE_PADDING_RATIO = 0.18
 DTM_MIN_ELEVATION_METERS = -5
 DTM_MAX_ELEVATION_METERS = 950
+TEXTURE_CONTRAST_FACTOR = 1.08
+TEXTURE_SHARPNESS_FACTOR = 1.12
+TEXTURE_UNSHARP_RADIUS = 1.35
+TEXTURE_UNSHARP_PERCENT = 135
+TEXTURE_UNSHARP_THRESHOLD = 3
 
 
 def load_local_env() -> None:
@@ -228,6 +233,17 @@ def normalized_uint8(values: np.ndarray, min_value: float, max_value: float) -> 
     return np.clip(scaled * 255, 0, 255).astype(np.uint8)
 
 
+def enhance_satellite_texture(image: Image.Image) -> Image.Image:
+    rgb_image = image.convert("RGB")
+    sharpened = rgb_image.filter(ImageFilter.UnsharpMask(
+        radius=TEXTURE_UNSHARP_RADIUS,
+        percent=TEXTURE_UNSHARP_PERCENT,
+        threshold=TEXTURE_UNSHARP_THRESHOLD,
+    ))
+    contrasted = ImageEnhance.Contrast(sharpened).enhance(TEXTURE_CONTRAST_FACTOR)
+    return ImageEnhance.Sharpness(contrasted).enhance(TEXTURE_SHARPNESS_FACTOR).convert("RGBA")
+
+
 def colorize(values: np.ndarray, min_value: float, max_value: float, palette: tuple[tuple[int, int, int], ...]) -> Image.Image:
     normalized = np.clip((values - min_value) / max(max_value - min_value, 1e-6), 0, 1)
     stops = np.linspace(0, 1, len(palette))
@@ -330,7 +346,10 @@ def crop_existing_gee_assets(bounds: tuple[float, float, float, float], product_
         path = OUTPUT_DIR / product.filename
         image = Image.open(path).convert("RGBA")
         box = crop_box(source_bounds, bounds, image.width, image.height)
-        cropped = image.crop(box).resize(OUTPUT_SIZE, Image.Resampling.BICUBIC)
+        resampling = Image.Resampling.LANCZOS if index == TEXTURE_PRODUCT_INDEX else Image.Resampling.BICUBIC
+        cropped = image.crop(box).resize(OUTPUT_SIZE, resampling)
+        if index == TEXTURE_PRODUCT_INDEX:
+            cropped = enhance_satellite_texture(cropped)
         cropped.save(path)
         LOGGER.info("Cropped %s to route corridor", path)
     return source_bounds
