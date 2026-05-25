@@ -91,6 +91,8 @@ function App() {
               heightmapPath={viewportAsset.heightmapPath}
               texturePath={viewportAsset.texturePath}
               fallbackImagePath={viewportAsset.renderPath}
+              routeGeoJsonPath={viewportAsset.routeGeoJsonPath}
+              manifestPath={viewportAsset.geeManifestPath}
               alt={copy.viewport.alt}
               resetLabel={copy.viewport.resetView}
             />
@@ -113,6 +115,24 @@ function App() {
             <span className="status-chip attention">{copy.routeStatus[primaryRoute.status]}</span>
             <h3>{copy.route.name}</h3>
             <p>{copy.route.description}</p>
+            <div className="route-meta" aria-label={copy.route.metricsAria}>
+              <span>
+                <strong>{primaryRoute.distanceKm.toFixed(2)}</strong>
+                {copy.route.distanceUnit}
+              </span>
+              <span>
+                <strong>{primaryRoute.estimatedMinutes}</strong>
+                {copy.route.minutesUnit}
+              </span>
+              <span>
+                <strong>{primaryRoute.riskScore.toFixed(3)}</strong>
+                {copy.route.riskUnit}
+              </span>
+              <span>
+                <strong>{primaryRoute.waypoints.length}</strong>
+                {copy.route.waypointUnit}
+              </span>
+            </div>
             <button className="command-button" type="button" aria-label={copy.route.uploadAria}>
               <UploadCloud size={18} />
               {copy.route.upload}

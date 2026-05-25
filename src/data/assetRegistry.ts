@@ -91,6 +91,8 @@ export const viewportAsset = {
   renderPath: publicAssetPath('assets/drone-twin/hkstp/hk-gee-blender-terrain.png'),
   heightmapPath: publicAssetPath('assets/geospatial/hk-gee-dem-heightmap.png'),
   texturePath: publicAssetPath('assets/geospatial/hk-gee-sentinel2-texture.png'),
+  routeGeoJsonPath: publicAssetPath('assets/routes/science_park_ting_kok_route_result.geojson'),
+  routeResultPath: publicAssetPath('assets/routes/science_park_ting_kok_route_result.json'),
   modelPath: publicAssetPath('assets/drone-twin/hkstp/hk-gee-terrain-model.glb'),
   manifestPath: publicAssetPath('assets/drone-twin/hkstp/blender-manifest.json'),
   geeManifestPath: publicAssetPath('assets/geospatial/manifest.json'),

@@ -1,22 +1,46 @@
 {
-  "generatedAt": "2026-05-11T11:47:16.285274+00:00",
+  "generatedAt": "2026-05-25T14:38:39.641556+00:00",
   "bounds": [
-    113.82,
-    22.13,
-    114.46,
-    22.58
+    114.11128200738735,
+    22.380612695253603,
+    114.32511799261265,
+    22.521587304746397
   ],
-  "region": "Hong Kong regional drone delivery study area",
+  "sourceBounds": [
+    114.11128200738735,
+    22.380612695253603,
+    114.32511799261265,
+    22.521587304746397
+  ],
+  "routeGeoJson": "public/assets/routes/science_park_ting_kok_route_result.geojson",
+  "region": "HKSTP to Ting Kok route corridor",
+  "processingMode": "official_5m_dtm_with_route_corridor_texture",
   "dateRange": {
     "sentinel2Start": "2024-01-01",
     "sentinel2End": "2026-05-11"
   },
   "status": "real_gee_products_generated",
+  "dtm": {
+    "requestedResolutionMeters": 5,
+    "connectedResolutionMeters": 5,
+    "connectedSource": "LandsD Digital Terrain Model (5m Grid) via CSDI Portal",
+    "status": "official_5m_dtm_connected",
+    "officialDtm": {
+      "source": "data/cache/landsd-dtm-5m/Digital Terrain Model.tif",
+      "downloadUrl": "https://static.csdi.gov.hk/csdi-webpage/download/43f9ca1bf5695d98885c767185b0afe1/geotiff",
+      "crs": "EPSG:5738",
+      "resolutionMeters": 5,
+      "elevationEncoding": {
+        "minMeters": -5,
+        "maxMeters": 950
+      }
+    }
+  },
   "products": [
     {
-      "name": "Copernicus DEM heightmap",
+      "name": "Route corridor DTM heightmap",
       "filename": "hk-gee-dem-heightmap.png",
-      "dataset": "COPERNICUS/DEM/GLO30",
+      "dataset": "LandsD Digital Terrain Model (5m Grid); COPERNICUS/DEM/GLO30 fallback",
       "description": "Grayscale elevation source used as Blender terrain displacement."
     },
     {
@@ -28,23 +52,23 @@
     {
       "name": "Terrain slope",
       "filename": "hk-gee-slope.png",
-      "dataset": "ee.Terrain.slope(COPERNICUS/DEM/GLO30)",
+      "dataset": "Slope derived from LandsD 5m DTM; ee.Terrain.slope(COPERNICUS/DEM/GLO30) fallback",
       "description": "Slope layer for mountain risk and landing suitability screening."
     },
     {
       "name": "Composite risk surface",
       "filename": "hk-gee-risk-surface.png",
-      "dataset": "Slope + Sentinel-2 NDVI + JRC water occurrence",
+      "dataset": "LandsD 5m DTM slope screening; GEE composite fallback",
       "description": "Screening-level operational risk surface; not an algorithm-approved route."
     }
   ],
   "attribution": [
-    "Copernicus DEM GLO-30 via Google Earth Engine",
-    "Copernicus Sentinel-2 Surface Reflectance via Google Earth Engine",
-    "JRC Global Surface Water via Google Earth Engine"
+    "Lands Department Digital Terrain Model (5m Grid) via CSDI Portal",
+    "Copernicus Sentinel-2 Surface Reflectance via Google Earth Engine"
   ],
   "limitations": [
-    "Copernicus DEM is a 30 m global DEM and is not a LiDAR-grade Hong Kong engineering DTM.",
+    "The current terrain heightmap uses the official LandsD 5 m DTM when processingMode starts with official_5m_dtm.",
+    "The DTM depicts vegetation height where land area is covered by vegetation, following the CSDI dataset limitation.",
     "Sentinel-2 is suitable for regional visual context but not close-range inspection.",
     "The risk surface is a frontend screening layer, not a validated route planner."
   ]

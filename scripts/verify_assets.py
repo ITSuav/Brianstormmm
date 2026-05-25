@@ -23,6 +23,8 @@ REQUIRED_ASSETS = (
     AssetRequirement("public/assets/geospatial/hk-gee-slope.png", MIN_LARGE_ASSET_BYTES),
     AssetRequirement("public/assets/geospatial/hk-gee-risk-surface.png", MIN_LARGE_ASSET_BYTES),
     AssetRequirement("public/assets/geospatial/manifest.json", MIN_MANIFEST_BYTES),
+    AssetRequirement("public/assets/routes/science_park_ting_kok_route_result.geojson", MIN_MANIFEST_BYTES),
+    AssetRequirement("public/assets/routes/science_park_ting_kok_route_result.json", MIN_MANIFEST_BYTES),
     AssetRequirement("public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png", MIN_LARGE_ASSET_BYTES),
     AssetRequirement("public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb", MIN_LARGE_ASSET_BYTES),
     AssetRequirement("public/assets/drone-twin/hkstp/blender-manifest.json", MIN_MANIFEST_BYTES),
@@ -72,6 +74,11 @@ def main() -> None:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("status") != "real_gee_products_generated":
         raise SystemExit("GEE manifest does not declare real generated products")
+    if manifest.get("routeGeoJson") != "public/assets/routes/science_park_ting_kok_route_result.geojson":
+        raise SystemExit("GEE manifest does not declare the Ting Kok route GeoJSON corridor")
+    dtm = manifest.get("dtm")
+    if not isinstance(dtm, dict) or dtm.get("status") != "official_5m_dtm_connected" or dtm.get("connectedResolutionMeters") != 5:
+        raise SystemExit("GEE manifest does not declare the official 5m DTM connection")
 
     blender_manifest_path = PROJECT_ROOT / "public/assets/drone-twin/hkstp/blender-manifest.json"
     blender_manifest = json.loads(blender_manifest_path.read_text(encoding="utf-8"))

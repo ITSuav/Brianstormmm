@@ -7,23 +7,111 @@ interface DigitalTwinViewportProps {
   readonly heightmapPath: string
   readonly texturePath: string
   readonly fallbackImagePath: string
+  readonly routeGeoJsonPath: string
+  readonly manifestPath: string
   readonly alt: string
   readonly resetLabel: string
 }
 
+interface Bounds {
+  readonly west: number
+  readonly south: number
+  readonly east: number
+  readonly north: number
+}
+
+interface RouteNode {
+  readonly id: string
+  readonly name: string
+  readonly kind: string
+  readonly source: string
+  readonly order: number
+  readonly longitude: number
+  readonly latitude: number
+}
+
+interface RouteGeometry {
+  readonly line: readonly GeoCoordinate[]
+  readonly nodes: readonly RouteNode[]
+}
+
+interface TerrainGeometryResult {
+  readonly geometry: THREE.BufferGeometry
+  readonly heightAt: (longitude: number, latitude: number, bounds: Bounds) => number
+}
+
+interface RouteFeatureCollection {
+  readonly features?: readonly RouteFeature[]
+}
+
+interface RouteFeature {
+  readonly geometry?: {
+    readonly type?: string
+    readonly coordinates?: unknown
+  }
+  readonly properties?: Readonly<Record<string, unknown>>
+}
+
+interface GeeManifest {
+  readonly bounds?: readonly unknown[]
+}
+
+type GeoCoordinate = readonly [number, number]
+
 const TERRAIN_WIDTH = 7.2
 const TERRAIN_DEPTH = 5.1
-const GRID_COLUMNS = 180
-const GRID_ROWS = 128
-const HEIGHT_SCALE = 1.25
+const GRID_COLUMNS = 260
+const GRID_ROWS = 184
+const HEIGHT_SCALE = 1.05
+const TERRAIN_BASE_Z = -0.18
 const PAN_LIMIT_X = TERRAIN_WIDTH * 0.32
 const PAN_LIMIT_Y = TERRAIN_DEPTH * 0.32
 const MIN_TARGET_HEIGHT = 0.18
-const MAX_TARGET_HEIGHT = 0.92
+const MAX_TARGET_HEIGHT = 0.74
 const EMPTY_RESET = () => undefined
 
 function clampValue(value: number, minValue: number, maxValue: number): number {
   return Math.min(Math.max(value, minValue), maxValue)
+}
+
+function readString(record: Readonly<Record<string, unknown>> | undefined, key: string, fallback: string): string {
+  const value = record?.[key]
+  return typeof value === 'string' && value.length > 0 ? value : fallback
+}
+
+function readNumber(record: Readonly<Record<string, unknown>> | undefined, key: string, fallback: number): number {
+  const value = record?.[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function parsePointCoordinate(value: unknown): GeoCoordinate | undefined {
+  if (!Array.isArray(value) || value.length < 2) {
+    return undefined
+  }
+
+  const [longitude, latitude] = value
+  if (typeof longitude !== 'number' || typeof latitude !== 'number') {
+    return undefined
+  }
+  return [longitude, latitude]
+}
+
+function parseLineCoordinates(value: unknown): readonly GeoCoordinate[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.flatMap((coordinate) => {
+    const point = parsePointCoordinate(coordinate)
+    return point ? [point] : []
+  })
+}
+
+async function loadJson<T>(src: string): Promise<T> {
+  const response = await fetch(src)
+  if (!response.ok) {
+    throw new Error(`Unable to load JSON asset: ${src}`)
+  }
+  return response.json() as Promise<T>
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -36,7 +124,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-function createTerrainGeometry(heightImage: HTMLImageElement): THREE.BufferGeometry {
+function createTerrainGeometry(heightImage: HTMLImageElement): TerrainGeometryResult {
   const canvas = document.createElement('canvas')
   canvas.width = GRID_COLUMNS
   canvas.height = GRID_ROWS
@@ -48,32 +136,36 @@ function createTerrainGeometry(heightImage: HTMLImageElement): THREE.BufferGeome
   context.drawImage(heightImage, 0, 0, GRID_COLUMNS, GRID_ROWS)
   const imageData = context.getImageData(0, 0, GRID_COLUMNS, GRID_ROWS).data
   const heightValues = new Float32Array(GRID_COLUMNS * GRID_ROWS)
-  let minHeight = 255
-  let maxHeight = 0
 
   for (let index = 0; index < heightValues.length; index += 1) {
-    const value = imageData[index * 4]
+    const value = imageData[index * 4] / 255
     heightValues[index] = value
-    minHeight = Math.min(minHeight, value)
-    maxHeight = Math.max(maxHeight, value)
   }
 
-  const heightRange = Math.max(1, maxHeight - minHeight)
-  const positions = new Float32Array(GRID_COLUMNS * GRID_ROWS * 3)
-  const uvs = new Float32Array(GRID_COLUMNS * GRID_ROWS * 2)
+  const positions: number[] = []
+  const uvs: number[] = []
   const indices: number[] = []
 
+  const addVertex = (xPosition: number, yPosition: number, zPosition: number, textureU: number, textureV: number): number => {
+    positions.push(xPosition, yPosition, zPosition)
+    uvs.push(textureU, textureV)
+    return positions.length / 3 - 1
+  }
+
+  const topIndex = (row: number, column: number): number => row * GRID_COLUMNS + column
+
   for (let row = 0; row < GRID_ROWS; row += 1) {
-    const v = row / (GRID_ROWS - 1)
+    const textureV = row / (GRID_ROWS - 1)
     for (let column = 0; column < GRID_COLUMNS; column += 1) {
-      const u = column / (GRID_COLUMNS - 1)
+      const textureU = column / (GRID_COLUMNS - 1)
       const vertexIndex = row * GRID_COLUMNS + column
-      const normalizedHeight = (heightValues[vertexIndex] - minHeight) / heightRange
-      positions[vertexIndex * 3] = (u - 0.5) * TERRAIN_WIDTH
-      positions[vertexIndex * 3 + 1] = (0.5 - v) * TERRAIN_DEPTH
-      positions[vertexIndex * 3 + 2] = normalizedHeight * HEIGHT_SCALE
-      uvs[vertexIndex * 2] = u
-      uvs[vertexIndex * 2 + 1] = 1 - v
+      addVertex(
+        (textureU - 0.5) * TERRAIN_WIDTH,
+        (0.5 - textureV) * TERRAIN_DEPTH,
+        heightValues[vertexIndex] * HEIGHT_SCALE,
+        textureU,
+        1 - textureV,
+      )
     }
   }
 
@@ -87,14 +179,134 @@ function createTerrainGeometry(heightImage: HTMLImageElement): THREE.BufferGeome
     }
   }
 
+  const bottomIndexByTopIndex = new Map<number, number>()
+  const bottomIndexForTopIndex = (vertexIndex: number): number => {
+    const existingIndex = bottomIndexByTopIndex.get(vertexIndex)
+    if (existingIndex !== undefined) {
+      return existingIndex
+    }
+
+    const positionOffset = vertexIndex * 3
+    const uvOffset = vertexIndex * 2
+    const bottomIndex = addVertex(positions[positionOffset], positions[positionOffset + 1], TERRAIN_BASE_Z, uvs[uvOffset], uvs[uvOffset + 1])
+    bottomIndexByTopIndex.set(vertexIndex, bottomIndex)
+    return bottomIndex
+  }
+
+  const addSideWall = (boundaryTopIndices: readonly number[]) => {
+    for (let index = 0; index < boundaryTopIndices.length - 1; index += 1) {
+      const firstTop = boundaryTopIndices[index]
+      const secondTop = boundaryTopIndices[index + 1]
+      const firstBottom = bottomIndexForTopIndex(firstTop)
+      const secondBottom = bottomIndexForTopIndex(secondTop)
+      indices.push(firstTop, firstBottom, secondTop, secondTop, firstBottom, secondBottom)
+    }
+  }
+
+  addSideWall(Array.from({ length: GRID_COLUMNS }, (_, column) => topIndex(0, column)))
+  addSideWall(Array.from({ length: GRID_ROWS }, (_, row) => topIndex(row, GRID_COLUMNS - 1)))
+  addSideWall(Array.from({ length: GRID_COLUMNS }, (_, column) => topIndex(GRID_ROWS - 1, GRID_COLUMNS - 1 - column)))
+  addSideWall(Array.from({ length: GRID_ROWS }, (_, row) => topIndex(GRID_ROWS - 1 - row, 0)))
+
+  const bottomNorthWest = addVertex(-TERRAIN_WIDTH / 2, TERRAIN_DEPTH / 2, TERRAIN_BASE_Z, 0, 1)
+  const bottomNorthEast = addVertex(TERRAIN_WIDTH / 2, TERRAIN_DEPTH / 2, TERRAIN_BASE_Z, 1, 1)
+  const bottomSouthEast = addVertex(TERRAIN_WIDTH / 2, -TERRAIN_DEPTH / 2, TERRAIN_BASE_Z, 1, 0)
+  const bottomSouthWest = addVertex(-TERRAIN_WIDTH / 2, -TERRAIN_DEPTH / 2, TERRAIN_BASE_Z, 0, 0)
+  indices.push(bottomNorthWest, bottomSouthEast, bottomNorthEast, bottomNorthWest, bottomSouthWest, bottomSouthEast)
+
   const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2))
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
   geometry.setIndex(indices)
   geometry.computeVertexNormals()
   geometry.computeBoundingBox()
   geometry.computeBoundingSphere()
-  return geometry
+
+  const heightAt = (longitude: number, latitude: number, bounds: Bounds): number => {
+    const longitudeRatio = clampValue((longitude - bounds.west) / Math.max(bounds.east - bounds.west, Number.EPSILON), 0, 1)
+    const latitudeRatio = clampValue((latitude - bounds.south) / Math.max(bounds.north - bounds.south, Number.EPSILON), 0, 1)
+    const column = Math.round(longitudeRatio * (GRID_COLUMNS - 1))
+    const row = Math.round((1 - latitudeRatio) * (GRID_ROWS - 1))
+    const value = heightValues[row * GRID_COLUMNS + column]
+    return value * HEIGHT_SCALE
+  }
+
+  return { geometry, heightAt }
+}
+
+function parseRouteGeometry(collection: RouteFeatureCollection): RouteGeometry {
+  const features = collection.features ?? []
+  const line = features.flatMap((feature) => (feature.geometry?.type === 'LineString' ? parseLineCoordinates(feature.geometry.coordinates) : []))
+  const nodes = features.flatMap((feature) => {
+    if (feature.geometry?.type !== 'Point') {
+      return []
+    }
+
+    const coordinate = parsePointCoordinate(feature.geometry.coordinates)
+    if (!coordinate) {
+      return []
+    }
+
+    const properties = feature.properties
+    const order = readNumber(properties, 'order', 0)
+    return [
+      {
+        id: readString(properties, 'node_id', `route-node-${order}`),
+        name: readString(properties, 'name', `Route node ${order}`),
+        kind: readString(properties, 'kind', 'waypoint'),
+        source: readString(properties, 'source', 'unknown'),
+        order,
+        longitude: coordinate[0],
+        latitude: coordinate[1],
+      },
+    ]
+  })
+
+  return { line, nodes }
+}
+
+function boundsFromManifest(manifest: GeeManifest, route: RouteGeometry): Bounds {
+  const manifestBounds = manifest.bounds
+  if (
+    Array.isArray(manifestBounds)
+    && manifestBounds.length >= 4
+    && manifestBounds.every((value) => typeof value === 'number' && Number.isFinite(value))
+  ) {
+    return { west: manifestBounds[0] as number, south: manifestBounds[1] as number, east: manifestBounds[2] as number, north: manifestBounds[3] as number }
+  }
+
+  const coordinates = [...route.line, ...route.nodes.map((node) => [node.longitude, node.latitude] as const)]
+  const longitudes = coordinates.map((coordinate) => coordinate[0])
+  const latitudes = coordinates.map((coordinate) => coordinate[1])
+  const west = Math.min(...longitudes)
+  const east = Math.max(...longitudes)
+  const south = Math.min(...latitudes)
+  const north = Math.max(...latitudes)
+  const padding = 0.006
+  return { west: west - padding, south: south - padding, east: east + padding, north: north + padding }
+}
+
+function coordinateToTerrain(longitude: number, latitude: number, bounds: Bounds, heightAt: TerrainGeometryResult['heightAt'], altitudeOffset = 0.1): THREE.Vector3 {
+  const longitudeRatio = clampValue((longitude - bounds.west) / Math.max(bounds.east - bounds.west, Number.EPSILON), 0, 1)
+  const latitudeRatio = clampValue((latitude - bounds.south) / Math.max(bounds.north - bounds.south, Number.EPSILON), 0, 1)
+  return new THREE.Vector3(
+    (longitudeRatio - 0.5) * TERRAIN_WIDTH,
+    (latitudeRatio - 0.5) * TERRAIN_DEPTH,
+    heightAt(longitude, latitude, bounds) + altitudeOffset,
+  )
+}
+
+function routeNodeColor(kind: string): number {
+  if (kind === 'depot') {
+    return 0x4285f4
+  }
+  if (kind === 'charger') {
+    return 0x34a853
+  }
+  if (kind === 'destination') {
+    return 0xea4335
+  }
+  return 0xfbbc04
 }
 
 function disposeObject(object: THREE.Object3D): void {
@@ -113,11 +325,12 @@ function disposeObject(object: THREE.Object3D): void {
   })
 }
 
-export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImagePath, alt, resetLabel }: DigitalTwinViewportProps) {
+export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImagePath, routeGeoJsonPath, manifestPath, alt, resetLabel }: DigitalTwinViewportProps) {
   const mountRef = useRef<HTMLDivElement | null>(null)
   const resetViewRef = useRef<() => void>(EMPTY_RESET)
   const [isReady, setIsReady] = useState(false)
   const [hasError, setHasError] = useState(false)
+  const [selectedRouteNode, setSelectedRouteNode] = useState<RouteNode | undefined>()
 
   useEffect(() => {
     const mount = mountRef.current
@@ -127,8 +340,14 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
 
     let isDisposed = false
     let satelliteTexture: THREE.Texture | undefined
+    const clickableMarkers: THREE.Object3D[] = []
+    const routeHotspots: Array<{ readonly object: THREE.Object3D; readonly routeNode: RouteNode }> = []
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+    const projectedPosition = new THREE.Vector3()
     setIsReady(false)
     setHasError(false)
+    setSelectedRouteNode(undefined)
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 80)
@@ -204,13 +423,56 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(mount)
 
-    Promise.all([loadImage(heightmapPath), loadImage(texturePath)])
-      .then(([heightImage, textureImage]) => {
+    const handleRouteClick = (event: PointerEvent) => {
+      if (event.target instanceof Element && event.target.closest('.viewport-reset-button, .route-node-panel')) {
+        return
+      }
+
+      const rect = renderer.domElement.getBoundingClientRect()
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera(pointer, camera)
+
+      const hit = raycaster.intersectObjects(clickableMarkers, false).find((item) => item.object.userData.routeNode)
+      const routeNode = hit?.object.userData.routeNode as RouteNode | undefined
+      if (routeNode) {
+        setSelectedRouteNode(routeNode)
+        return
+      }
+
+      scene.updateMatrixWorld(true)
+      let nearestRouteNode: RouteNode | undefined
+      let nearestDistance = Number.POSITIVE_INFINITY
+      for (const hotspot of routeHotspots) {
+        projectedPosition.setFromMatrixPosition(hotspot.object.matrixWorld).project(camera)
+        if (!Number.isFinite(projectedPosition.x) || !Number.isFinite(projectedPosition.y)) {
+          continue
+        }
+        const screenX = (projectedPosition.x * 0.5 + 0.5) * rect.width
+        const screenY = (-projectedPosition.y * 0.5 + 0.5) * rect.height
+        const distance = Math.hypot(event.clientX - rect.left - screenX, event.clientY - rect.top - screenY)
+        if (distance < nearestDistance) {
+          nearestDistance = distance
+          nearestRouteNode = hotspot.routeNode
+        }
+      }
+
+      if (nearestRouteNode && nearestDistance < 140) {
+        setSelectedRouteNode(nearestRouteNode)
+      }
+    }
+
+    mount.addEventListener('pointerup', handleRouteClick)
+
+    Promise.all([loadImage(heightmapPath), loadImage(texturePath), loadJson<RouteFeatureCollection>(routeGeoJsonPath), loadJson<GeeManifest>(manifestPath)])
+      .then(([heightImage, textureImage, routeCollection, manifest]) => {
         if (isDisposed) {
           return
         }
 
-        const geometry = createTerrainGeometry(heightImage)
+        const terrainGeometry = createTerrainGeometry(heightImage)
+        const route = parseRouteGeometry(routeCollection)
+        const bounds = boundsFromManifest(manifest, route)
         satelliteTexture = new THREE.Texture(textureImage)
         satelliteTexture.colorSpace = THREE.SRGBColorSpace
         satelliteTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
@@ -223,7 +485,7 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
         const terrainGroup = new THREE.Group()
         terrainGroup.rotation.z = -0.08
         terrainGroup.name = 'hkstp-local-scene-terrain-group'
-        const terrain = new THREE.Mesh(geometry, material)
+        const terrain = new THREE.Mesh(terrainGeometry.geometry, material)
         terrain.name = 'interactive-hkstp-delivery-terrain'
         terrainGroup.add(terrain)
 
@@ -234,15 +496,38 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
         terrainGroup.add(rimObject)
 
         const routeMaterial = new THREE.LineBasicMaterial({ color: 0xfbbc04, transparent: true, opacity: 0.92 })
-        const routeGeometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-2.9, -1.7, 0.62),
-          new THREE.Vector3(-1.3, -0.45, 0.78),
-          new THREE.Vector3(0.7, 0.18, 0.9),
-          new THREE.Vector3(2.6, 1.55, 0.82),
-        ])
+        const routePoints = route.line.map(([longitude, latitude]) => coordinateToTerrain(longitude, latitude, bounds, terrainGeometry.heightAt, 0.16))
+        const routeGeometry = new THREE.BufferGeometry().setFromPoints(routePoints)
         const routeLine = new THREE.Line(routeGeometry, routeMaterial)
-        routeLine.name = 'operator-route-preview'
+        routeLine.name = 'geojson-route-preview'
         terrainGroup.add(routeLine)
+
+        route.nodes.forEach((node) => {
+          const markerGroup = new THREE.Group()
+          markerGroup.name = `route-node-${node.id}`
+          markerGroup.position.copy(coordinateToTerrain(node.longitude, node.latitude, bounds, terrainGeometry.heightAt, 0.22))
+
+          const color = routeNodeColor(node.kind)
+          const markerMaterial = new THREE.MeshBasicMaterial({ color })
+          const baseMaterial = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.28 })
+          const hitMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+          const marker = new THREE.Mesh(new THREE.SphereGeometry(0.085, 18, 12), markerMaterial)
+          marker.position.z = 0.08
+          marker.userData.routeNode = node
+          const hitTarget = new THREE.Mesh(new THREE.SphereGeometry(0.26, 18, 12), hitMaterial)
+          hitTarget.position.z = 0.08
+          hitTarget.userData.routeNode = node
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.012, 32), baseMaterial)
+          base.userData.routeNode = node
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.18, 10), markerMaterial)
+          stem.position.z = -0.005
+          stem.userData.routeNode = node
+          markerGroup.add(base, stem, marker, hitTarget)
+          terrainGroup.add(markerGroup)
+          clickableMarkers.push(hitTarget, marker, base, stem)
+          routeHotspots.push({ object: markerGroup, routeNode: node })
+        })
+
         scene.add(terrainGroup)
         setIsReady(true)
       })
@@ -262,6 +547,7 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
       isDisposed = true
       resetViewRef.current = EMPTY_RESET
       resizeObserver.disconnect()
+      mount.removeEventListener('pointerup', handleRouteClick)
       controls.dispose()
       renderer.setAnimationLoop(null)
       if (renderer.domElement.parentElement === mount) {
@@ -271,7 +557,7 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
       satelliteTexture?.dispose()
       renderer.dispose()
     }
-  }, [alt, heightmapPath, texturePath])
+  }, [alt, heightmapPath, manifestPath, routeGeoJsonPath, texturePath])
 
   return (
     <div
@@ -284,6 +570,33 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
       <button className="viewport-reset-button" type="button" aria-label={resetLabel} title={resetLabel} onClick={() => resetViewRef.current()}>
         <RotateCcw size={18} />
       </button>
+      {selectedRouteNode ? (
+        <article className="route-node-panel" aria-live="polite">
+          <div>
+            <span>{selectedRouteNode.kind}</span>
+            <strong>{selectedRouteNode.name}</strong>
+          </div>
+          <dl>
+            <div>
+              <dt>Node</dt>
+              <dd>{selectedRouteNode.id}</dd>
+            </div>
+            <div>
+              <dt>Order</dt>
+              <dd>{selectedRouteNode.order + 1}</dd>
+            </div>
+            <div>
+              <dt>Source</dt>
+              <dd>{selectedRouteNode.source}</dd>
+            </div>
+            <div>
+              <dt>Lon / Lat</dt>
+              <dd>{selectedRouteNode.longitude.toFixed(4)} / {selectedRouteNode.latitude.toFixed(4)}</dd>
+            </div>
+          </dl>
+          <button type="button" onClick={() => setSelectedRouteNode(undefined)}>Close</button>
+        </article>
+      ) : null}
     </div>
   )
 }

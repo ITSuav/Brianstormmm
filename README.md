@@ -36,9 +36,9 @@ Brianstormmm Frontend Command Center 是 ITSuav 無人機配送專案的前端�
 
 - 前端：React + TypeScript + Vite 已完成。
 - 中央視圖：Three.js 互動式 3D local scene，支援滑鼠拖曳、滾輪縮放、受限平移與一定角度內的環繞旋轉。
-- 地理資料：由真實 Google Earth Engine 資料生成香港區域地形與衛星影像。
-- Blender 資產：由 GEE 高程圖與 Sentinel-2 紋理生成真實渲染圖與 GLB。
-- 路線規劃：保留為演算法組接入口，目前不把前端展示路線宣稱為已驗證航線。
+- 地理資料：由香港地政總署 CSDI 官方 5 m Digital Terrain Model 生成香港科學園至汀角村路線 corridor 地形，並疊加 GEE Sentinel-2 衛星影像。
+- Blender 資產：由官方 5 m DTM 高程圖與 Sentinel-2 紋理生成實體地形渲染圖與 GLB。
+- 路線規劃：已接入演算法組 GeoJSON 範例路線，中央 3D 視圖展示可點擊節點與屬性；目前不把前端展示路線宣稱為已驗證航線。
 - MATSim：保留為後續模擬團隊接入口，目前前端只展示協作槽位。
 - 大屏數字：目前為前端展示佔位資料，待取得公司資料 API 後替換為即時動態資料。
 
@@ -85,22 +85,23 @@ npm run open
 - 大屏風格是營運總控，而不是行銷 landing page。
 - 預設繁體中文，並支援 English / 简体中文 / 繁體中文切換。
 - 使用 Google 風格藍、綠、黃、紅作為操作狀態點綴，但避免繁雜彩條。
-- 中央 3D 地形由真實 GEE DEM 在瀏覽器端取樣生成，並覆蓋 Sentinel-2 真彩色影像。
+- 中央 3D 地形由路線 corridor 的官方 5 m DTM 在瀏覽器端取樣生成，並覆蓋 Sentinel-2 真彩色影像。
+- GeoJSON 路線節點會以 3D marker 顯示，點擊後可查看 node ID、節點類型、來源與經緯度。
 - `src/components/DigitalTwinViewport.tsx` 使用 Three.js + OrbitControls 實現 local scene 互動。
 - `src/domain/models.ts` 定義無人機、航線、任務、資產與指標的 TypeScript 邊界。
 - `src/data/assetRegistry.ts` 區分已生成真實資產、未來必需官方資料與暫時 blocked 的展示層。
 
 ### 資料來源
 
-GEE 腳本：`scripts/export_gee_assets.py`
+資產腳本：`scripts/export_gee_assets.py`
+
+路線資料：`public/assets/routes/science_park_ting_kok_route_result.geojson` 與 `public/assets/routes/science_park_ting_kok_route_result.json`
 
 目前使用：
 
-- `COPERNICUS/DEM/GLO30`：30 m DEM，高程來源。
+- LandsD `Digital Terrain Model (DTM)`：CSDI 官方 5 m raster grid，高程來源，EPSG:5738。
 - `COPERNICUS/S2_SR_HARMONIZED`：Sentinel-2 地表反射率，真彩色衛星紋理。
-- `JRC/GSW1_4/GlobalSurfaceWater`：水體 occurrence，作為風險篩查輸入之一。
-- `ee.Terrain.slope(COPERNICUS/DEM/GLO30)`：坡度圖層。
-- Sentinel-2 `B8` 與 `B4` 計算 NDVI：植被風險篩查。
+- LandsD 5 m DTM 派生坡度與坡度風險圖層。
 
 生成檔案：
 
@@ -109,11 +110,13 @@ GEE 腳本：`scripts/export_gee_assets.py`
 - `public/assets/geospatial/hk-gee-slope.png`
 - `public/assets/geospatial/hk-gee-risk-surface.png`
 - `public/assets/geospatial/manifest.json`
+- `public/assets/routes/science_park_ting_kok_route_result.geojson`
+- `public/assets/routes/science_park_ting_kok_route_result.json`
 - `public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png`
 - `public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb`
 - `public/assets/drone-twin/hkstp/blender-manifest.json`
 
-限制：這些資料適合前端展示與區域級篩查，不是航空級工程資料。正式營運仍需官方建築高度、禁飛區、障礙物、天氣與公司內部營運 API。
+限制：這些資料適合前端展示與 corridor 級篩查，不是航空級工程資料。CSDI DTM 說明指出植被覆蓋區域會以植被高度表達地形；正式營運仍需官方建築高度、禁飛區、障礙物、天氣與公司內部營運 API。
 
 ### 前端維護方案
 
@@ -203,9 +206,9 @@ Brianstormmm Frontend Command Center 是 ITSuav 无人机配送项目的前端�
 
 - 前端：React + TypeScript + Vite 已完成。
 - 中央视图：Three.js 交互式 3D local scene，支持鼠标拖拽、滚轮缩放、受限平移与一定角度内的环绕旋转。
-- 地理数据：由真实 Google Earth Engine 数据生成香港区域地形与卫星影像。
-- Blender 资产：由 GEE 高程图与 Sentinel-2 纹理生成真实渲染图与 GLB。
-- 路线规划：保留为算法组接入口，目前不把前端展示路线宣称为已验证航线。
+- 地理数据：由香港地政总署 CSDI 官方 5 m Digital Terrain Model 生成香港科学园至汀角村路线 corridor 地形，并叠加 GEE Sentinel-2 卫星影像。
+- Blender 资产：由官方 5 m DTM 高程图与 Sentinel-2 纹理生成实体地形渲染图与 GLB。
+- 路线规划：已接入算法组 GeoJSON 示例路线，中央 3D 视图展示可点击节点与属性；目前不把前端展示路线宣称为已验证航线。
 - MATSim：保留为后续仿真团队接入口，目前前端只展示协作槽位。
 - 大屏数字：目前为前端展示占位数据，待取得公司数据 API 后替换为实时动态数据。
 
@@ -252,22 +255,23 @@ npm run open
 - 大屏风格是运营总控，而不是营销 landing page。
 - 默认繁体中文，并支持 English / 简体中文 / 繁體中文切换。
 - 使用 Google 风格蓝、绿、黄、红作为操作状态点缀，但避免繁杂彩条。
-- 中央 3D 地形由真实 GEE DEM 在浏览器端采样生成，并覆盖 Sentinel-2 真彩色影像。
+- 中央 3D 地形由路线 corridor 的官方 5 m DTM 在浏览器端采样生成，并覆盖 Sentinel-2 真彩色影像。
+- GeoJSON 路线节点会以 3D marker 显示，点击后可查看 node ID、节点类型、来源与经纬度。
 - `src/components/DigitalTwinViewport.tsx` 使用 Three.js + OrbitControls 实现 local scene 交互。
 - `src/domain/models.ts` 定义无人机、航线、任务、资产与指标的 TypeScript 边界。
 - `src/data/assetRegistry.ts` 区分已生成真实资产、未来必需官方数据与暂时 blocked 的展示层。
 
 ### 数据源
 
-GEE 脚本：`scripts/export_gee_assets.py`
+资产脚本：`scripts/export_gee_assets.py`
+
+路线数据：`public/assets/routes/science_park_ting_kok_route_result.geojson` 与 `public/assets/routes/science_park_ting_kok_route_result.json`
 
 目前使用：
 
-- `COPERNICUS/DEM/GLO30`：30 m DEM，高程来源。
+- LandsD `Digital Terrain Model (DTM)`：CSDI 官方 5 m raster grid，高程来源，EPSG:5738。
 - `COPERNICUS/S2_SR_HARMONIZED`：Sentinel-2 地表反射率，真彩色卫星纹理。
-- `JRC/GSW1_4/GlobalSurfaceWater`：水体 occurrence，作为风险筛查输入之一。
-- `ee.Terrain.slope(COPERNICUS/DEM/GLO30)`：坡度图层。
-- Sentinel-2 `B8` 与 `B4` 计算 NDVI：植被风险筛查。
+- LandsD 5 m DTM 派生坡度与坡度风险图层。
 
 生成文件：
 
@@ -276,11 +280,13 @@ GEE 脚本：`scripts/export_gee_assets.py`
 - `public/assets/geospatial/hk-gee-slope.png`
 - `public/assets/geospatial/hk-gee-risk-surface.png`
 - `public/assets/geospatial/manifest.json`
+- `public/assets/routes/science_park_ting_kok_route_result.geojson`
+- `public/assets/routes/science_park_ting_kok_route_result.json`
 - `public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png`
 - `public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb`
 - `public/assets/drone-twin/hkstp/blender-manifest.json`
 
-限制：这些数据适合前端展示与区域级筛查，不是航空级工程数据。正式运营仍需官方建筑高度、禁飞区、障碍物、天气与公司内部运营 API。
+限制：这些数据适合前端展示与 corridor 级筛查，不是航空级工程数据。CSDI DTM 说明指出植被覆盖区域会以植被高度表达地形；正式运营仍需官方建筑高度、禁飞区、障碍物、天气与公司内部运营 API。
 
 ### 前端维护方案
 
@@ -348,9 +354,9 @@ The original Brainstorm project README is preserved at [docs/original-brainstorm
 
 - Frontend: React + TypeScript + Vite is implemented.
 - Central view: interactive Three.js 3D local scene with mouse drag, wheel zoom, bounded pan, and constrained orbit rotation.
-- Geospatial data: real Hong Kong regional terrain and satellite imagery generated from Google Earth Engine.
-- Blender assets: real render and GLB generated from the GEE heightmap and Sentinel-2 texture.
-- Route planning: reserved for the algorithm team; the frontend does not claim displayed routes are validated flight routes.
+- Geospatial data: real HKSTP-to-Ting-Kok route-corridor terrain generated from the official LandsD CSDI 5 m Digital Terrain Model, with GEE Sentinel-2 satellite imagery draped on top.
+- Blender assets: solid terrain render and GLB generated from the official 5 m DTM heightmap and Sentinel-2 texture.
+- Route planning: connected to the algorithm-team GeoJSON sample route. The central 3D view shows clickable nodes and attributes, but the frontend does not claim displayed routes are validated flight routes.
 - MATSim: reserved for the simulation team; the current UI only shows the collaboration slot.
 - Dashboard numbers: current values are frontend placeholders and should become live values after company data APIs are available.
 
@@ -397,22 +403,23 @@ npm run open
 - The UI is an operations dashboard, not a marketing landing page.
 - Default locale is Traditional Chinese, with English / Simplified Chinese / Traditional Chinese switching.
 - Google-inspired blue, green, yellow, and red accents indicate operational states without noisy striping.
-- The central 3D terrain is generated in-browser from a real GEE DEM and draped with a Sentinel-2 true-color texture.
+- The central 3D terrain is generated in-browser from the route-corridor official 5 m DTM and draped with a Sentinel-2 true-color texture.
+- GeoJSON route nodes are rendered as 3D markers. Clicking a marker shows node ID, kind, source, and lon/lat attributes.
 - `src/components/DigitalTwinViewport.tsx` implements the local-scene interaction using Three.js + OrbitControls.
 - `src/domain/models.ts` defines TypeScript boundaries for drones, routes, tasks, assets, and metrics.
 - `src/data/assetRegistry.ts` separates generated real assets, future required official datasets, and currently blocked visualization layers.
 
 ### Data Sources
 
-GEE script: `scripts/export_gee_assets.py`
+Asset script: `scripts/export_gee_assets.py`
+
+Route data: `public/assets/routes/science_park_ting_kok_route_result.geojson` and `public/assets/routes/science_park_ting_kok_route_result.json`
 
 Current datasets:
 
-- `COPERNICUS/DEM/GLO30`: 30 m DEM elevation source.
+- LandsD `Digital Terrain Model (DTM)`: official CSDI 5 m raster-grid elevation source, EPSG:5738.
 - `COPERNICUS/S2_SR_HARMONIZED`: Sentinel-2 surface reflectance true-color satellite texture.
-- `JRC/GSW1_4/GlobalSurfaceWater`: water occurrence as one screening-risk input.
-- `ee.Terrain.slope(COPERNICUS/DEM/GLO30)`: terrain slope layer.
-- NDVI from Sentinel-2 `B8` and `B4`: vegetation screening input.
+- Slope and slope-risk layers derived from the LandsD 5 m DTM.
 
 Generated files:
 
@@ -421,11 +428,13 @@ Generated files:
 - `public/assets/geospatial/hk-gee-slope.png`
 - `public/assets/geospatial/hk-gee-risk-surface.png`
 - `public/assets/geospatial/manifest.json`
+- `public/assets/routes/science_park_ting_kok_route_result.geojson`
+- `public/assets/routes/science_park_ting_kok_route_result.json`
 - `public/assets/drone-twin/hkstp/hk-gee-blender-terrain.png`
 - `public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb`
 - `public/assets/drone-twin/hkstp/blender-manifest.json`
 
-Limitations: these datasets are suitable for frontend visualization and regional screening, not aviation-grade engineering operations. Production operations still require official building heights, no-fly zones, obstacle data, weather feeds, and company operations APIs.
+Limitations: these datasets are suitable for frontend visualization and corridor-level screening, not aviation-grade engineering operations. The CSDI DTM notes that vegetated land areas may depict vegetation height as terrain. Production operations still require official building heights, no-fly zones, obstacle data, weather feeds, and company operations APIs.
 
 ### Frontend Maintenance Plan
 

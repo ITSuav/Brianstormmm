@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-11T12:20:18.955042+00:00",
+  "generatedAt": "2026-05-25T14:39:10.569595+00:00",
   "status": "real_blender_render_generated",
   "blenderVersion": "4.3.2",
   "inputs": {
@@ -12,15 +12,16 @@
     "model": "public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb"
   },
   "terrain": {
-    "meshGridSize": 176,
+    "meshGridSize": 224,
     "verticalScale": 1.05,
+    "baseZ": -0.18,
     "sourceBounds": [
-      113.82,
-      22.13,
-      114.46,
-      22.58
+      114.11128200738735,
+      22.380612695253603,
+      114.32511799261265,
+      22.521587304746397
     ],
-    "mode": "real Sentinel-2 satellite texture draped over smoothed DEM terrain"
+    "mode": "solid terrain mesh with real Sentinel-2 satellite texture draped over DEM terrain"
   },
   "limitations": [
     "No building-height extrusion is generated until official Hong Kong building height data is supplied.",

@@ -18,6 +18,7 @@ dist-ssr
 __pycache__/
 *.pyc
 .earthengine/
+data/cache/
 
 # Editor directories and files
 .vscode/*

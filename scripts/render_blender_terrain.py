@@ -15,10 +15,11 @@ OUTPUT_DIR = PROJECT_ROOT / "public" / "assets" / "drone-twin" / "hkstp"
 RENDER_PATH = OUTPUT_DIR / "hk-gee-blender-terrain.png"
 MODEL_PATH = OUTPUT_DIR / "hk-gee-terrain-model.glb"
 BLENDER_MANIFEST_PATH = OUTPUT_DIR / "blender-manifest.json"
-GRID_SIZE = 176
+GRID_SIZE = 224
 TERRAIN_WIDTH = 7.2
 TERRAIN_DEPTH = 5.1
 VERTICAL_SCALE = 1.05
+TERRAIN_BASE_Z = -0.18
 
 
 def require_inputs() -> None:
@@ -68,6 +69,40 @@ def build_terrain_mesh(name: str, pixels, image_width: int, image_height: int):
         for column in range(GRID_SIZE - 1):
             a = row * GRID_SIZE + column
             faces.append((a, a + 1, a + GRID_SIZE + 1, a + GRID_SIZE))
+
+    bottom_index_by_top_index = {}
+
+    def bottom_index_for_top_index(top_index: int) -> int:
+        existing_index = bottom_index_by_top_index.get(top_index)
+        if existing_index is not None:
+            return existing_index
+        x, y, _ = vertices[top_index]
+        bottom_index = len(vertices)
+        vertices.append((x, y, TERRAIN_BASE_Z))
+        bottom_index_by_top_index[top_index] = bottom_index
+        return bottom_index
+
+    def add_side_wall(boundary_top_indices) -> None:
+        for index in range(len(boundary_top_indices) - 1):
+            first_top = boundary_top_indices[index]
+            second_top = boundary_top_indices[index + 1]
+            first_bottom = bottom_index_for_top_index(first_top)
+            second_bottom = bottom_index_for_top_index(second_top)
+            faces.append((first_top, second_top, second_bottom, first_bottom))
+
+    add_side_wall([column for column in range(GRID_SIZE)])
+    add_side_wall([row * GRID_SIZE + GRID_SIZE - 1 for row in range(GRID_SIZE)])
+    add_side_wall([(GRID_SIZE - 1) * GRID_SIZE + column for column in range(GRID_SIZE - 1, -1, -1)])
+    add_side_wall([row * GRID_SIZE for row in range(GRID_SIZE - 1, -1, -1)])
+
+    bottom_north_west = len(vertices)
+    vertices.extend([
+        (-TERRAIN_WIDTH / 2, TERRAIN_DEPTH / 2, TERRAIN_BASE_Z),
+        (TERRAIN_WIDTH / 2, TERRAIN_DEPTH / 2, TERRAIN_BASE_Z),
+        (TERRAIN_WIDTH / 2, -TERRAIN_DEPTH / 2, TERRAIN_BASE_Z),
+        (-TERRAIN_WIDTH / 2, -TERRAIN_DEPTH / 2, TERRAIN_BASE_Z),
+    ])
+    faces.append((bottom_north_west, bottom_north_west + 1, bottom_north_west + 2, bottom_north_west + 3))
 
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(vertices, [], faces)
@@ -158,8 +193,8 @@ def render_scene() -> None:
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_EEVEE_NEXT"
     scene.eevee.taa_render_samples = 64
-    scene.render.resolution_x = 1800
-    scene.render.resolution_y = 1012
+    scene.render.resolution_x = 2200
+    scene.render.resolution_y = 1238
     scene.world = bpy.data.worlds.new("black-world")
     scene.world.color = (0.005, 0.005, 0.006)
     scene.render.filepath = str(RENDER_PATH)
@@ -204,8 +239,9 @@ def main() -> None:
         "terrain": {
             "meshGridSize": GRID_SIZE,
             "verticalScale": VERTICAL_SCALE,
+            "baseZ": TERRAIN_BASE_Z,
             "sourceBounds": gee_manifest.get("bounds"),
-            "mode": "real Sentinel-2 satellite texture draped over smoothed DEM terrain",
+            "mode": "solid terrain mesh with real Sentinel-2 satellite texture draped over DEM terrain",
         },
         "limitations": [
             "No building-height extrusion is generated until official Hong Kong building height data is supplied.",

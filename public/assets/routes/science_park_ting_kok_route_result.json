@@ -1,0 +1,93 @@
+﻿{
+  "scenario_id": "science_park_to_ting_kok_demo",
+  "name": "Hong Kong Science Park to Tai Po Ting Kok Village demo",
+  "status": "direct",
+  "service_windows": [
+    {
+      "days": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday"
+      ],
+      "start": "11:00",
+      "end": "13:00"
+    },
+    {
+      "days": [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday"
+      ],
+      "start": "15:30",
+      "end": "17:00"
+    }
+  ],
+  "path": [
+    {
+      "node_id": "hong_kong_science_park",
+      "name": "Hong Kong Science Park",
+      "lon": 114.2119,
+      "lat": 22.4257,
+      "kind": "depot",
+      "source": "public_estimate"
+    },
+    {
+      "node_id": "pak_shek_kok_waterfront",
+      "name": "Pak Shek Kok waterfront waypoint",
+      "lon": 114.215,
+      "lat": 22.433,
+      "kind": "waypoint",
+      "source": "public_estimate"
+    },
+    {
+      "node_id": "demo_relay_pad_tolo_harbour",
+      "name": "Demo relay or charging pad near Tolo Harbour",
+      "lon": 114.2215,
+      "lat": 22.449,
+      "kind": "charger",
+      "source": "demo_assumption"
+    },
+    {
+      "node_id": "tolo_harbour_mid",
+      "name": "Tolo Harbour mid-route waypoint",
+      "lon": 114.224,
+      "lat": 22.456,
+      "kind": "waypoint",
+      "source": "demo_assumption"
+    },
+    {
+      "node_id": "ting_kok_village",
+      "name": "Ting Kok Village, Tai Po",
+      "lon": 114.2245,
+      "lat": 22.4765,
+      "kind": "destination",
+      "source": "public_estimate"
+    }
+  ],
+  "metrics": {
+    "distance": 0.05313999909080297,
+    "time": 0.0664249988635037,
+    "energy": 0.42511999272642376,
+    "risk": 0.033724766432002076,
+    "distance_km_estimate": 5.87216631004457
+  },
+  "charging_station": null,
+  "rfz_summary": {
+    "source": "data/geospatial/rfz.geojson",
+    "loaded_zone_count": 288,
+    "planning_zone_count": 259,
+    "authorized_zone_count": 29,
+    "authorized_keywords": [
+      "低空經濟監管沙盒"
+    ]
+  },
+  "data_limitations": [
+    "Keeta Drone internal API, aircraft telemetry, real flight route, launch pad, charging pad, and dispatch data are unavailable.",
+    "Coordinates and intermediate waypoints are public or demo estimates for local algorithm demonstration.",
+    "RFZ polygons come from the local GeoJSON file and are used as no-fly constraints."
+  ]
+}

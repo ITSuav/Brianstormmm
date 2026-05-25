@@ -29,17 +29,19 @@ export const drones: readonly Drone[] = [
 
 export const routeCandidates: readonly DroneRouteCandidate[] = [
   {
-    id: 'route-algorithm-slot-001',
-    name: 'HKSTP to eastern mountain delivery slot',
-    status: 'algorithm_pending',
+    id: 'route-hkstp-ting-kok-001',
+    name: 'HKSTP to Ting Kok Village lunch route',
+    status: 'candidate',
     source: 'algorithm_interface',
-    distanceKm: 0,
-    estimatedMinutes: 0,
-    riskScore: 0,
+    distanceKm: 5.87,
+    estimatedMinutes: 10,
+    riskScore: 0.034,
     waypoints: [
-      { sequence: 1, action: 'launch', label: 'HKSTP launch deck', latitude: 22.4269, longitude: 114.2122, altitudeMeters: 18 },
-      { sequence: 2, action: 'transit', label: 'Algorithm waypoint upload required', latitude: 22.4388, longitude: 114.2401, altitudeMeters: 130 },
-      { sequence: 3, action: 'delivery', label: 'Mountain delivery endpoint pending', latitude: 22.3862, longitude: 114.2786, altitudeMeters: 210 },
+      { sequence: 1, action: 'launch', label: 'Hong Kong Science Park', latitude: 22.4257, longitude: 114.2119, altitudeMeters: 18 },
+      { sequence: 2, action: 'transit', label: 'Pak Shek Kok waterfront waypoint', latitude: 22.433, longitude: 114.215, altitudeMeters: 45 },
+      { sequence: 3, action: 'transit', label: 'Demo relay or charging pad near Tolo Harbour', latitude: 22.449, longitude: 114.2215, altitudeMeters: 60 },
+      { sequence: 4, action: 'transit', label: 'Tolo Harbour mid-route waypoint', latitude: 22.456, longitude: 114.224, altitudeMeters: 60 },
+      { sequence: 5, action: 'delivery', label: 'Ting Kok Village, Tai Po', latitude: 22.4765, longitude: 114.2245, altitudeMeters: 35 },
     ],
   },
 ] as const
@@ -47,13 +49,13 @@ export const routeCandidates: readonly DroneRouteCandidate[] = [
 export const metrics: readonly Metric[] = [
   { label: 'Real GEE layers', value: '4', trend: 'DEM, imagery, slope, risk' },
   { label: 'Blender outputs', value: '2', trend: 'render + GLB' },
-  { label: 'Algorithm routes', value: 'pending', trend: 'interface only' },
+  { label: 'Algorithm routes', value: '1', trend: 'HKSTP to Ting Kok candidate' },
   { label: 'MATSim', value: 'pending', trend: 'team integration' },
 ] as const
 
 export const missionTimeline: readonly MissionEvent[] = [
-  { time: 'T-24h', label: 'GEE terrain and satellite export', status: 'nominal' },
-  { time: 'T-12h', label: 'Blender terrain render refresh', status: 'nominal' },
-  { time: 'T-04h', label: 'Algorithm route payload upload', status: 'attention' },
-  { time: 'T-02h', label: 'MATSim scenario ingest', status: 'attention' },
+  { time: 'T-24h', label: 'Algorithm GeoJSON route connected', status: 'nominal' },
+  { time: 'T-12h', label: 'Route corridor terrain refresh', status: 'nominal' },
+  { time: 'T-04h', label: 'Backend API joint test', status: 'attention' },
+  { time: 'T-02h', label: 'MATSim scenario ingest pending', status: 'attention' },
 ] as const
