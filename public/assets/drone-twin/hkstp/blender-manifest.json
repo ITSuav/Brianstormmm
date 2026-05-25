@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T16:27:55.464279+00:00",
+  "generatedAt": "2026-05-25T17:08:41.711999+00:00",
   "status": "real_blender_render_generated",
   "blenderVersion": "4.3.2",
   "inputs": {
@@ -12,9 +12,14 @@
     "model": "public/assets/drone-twin/hkstp/hk-gee-terrain-model.glb"
   },
   "terrain": {
-    "meshGridSize": 224,
-    "verticalScale": 1.05,
+    "meshGridSize": 384,
+    "verticalScale": 1.16,
     "baseZ": -0.18,
+    "renderResolution": [
+      3840,
+      2400
+    ],
+    "renderSamples": 192,
     "sourceBounds": [
       114.15988109493856,
       22.41265237922924,

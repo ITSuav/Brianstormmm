@@ -60,9 +60,9 @@ type GeoCoordinate = readonly [number, number]
 
 const TERRAIN_WIDTH = 7.2
 const TERRAIN_DEPTH = 5.1
-const GRID_COLUMNS = 260
-const GRID_ROWS = 184
-const HEIGHT_SCALE = 1.05
+const GRID_COLUMNS = 384
+const GRID_ROWS = 272
+const HEIGHT_SCALE = 1.16
 const TERRAIN_BASE_Z = -0.18
 const PAN_LIMIT_X = TERRAIN_WIDTH * 0.32
 const PAN_LIMIT_Y = TERRAIN_DEPTH * 0.32
@@ -355,7 +355,7 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' })
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.setClearColor(0x000000, 0)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3))
     renderer.domElement.className = 'digital-twin-canvas'
     renderer.domElement.setAttribute('aria-label', alt)
     mount.appendChild(renderer.domElement)
@@ -475,7 +475,10 @@ export function DigitalTwinViewport({ heightmapPath, texturePath, fallbackImageP
         const bounds = boundsFromManifest(manifest, route)
         satelliteTexture = new THREE.Texture(textureImage)
         satelliteTexture.colorSpace = THREE.SRGBColorSpace
-        satelliteTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy())
+        satelliteTexture.anisotropy = Math.min(12, renderer.capabilities.getMaxAnisotropy())
+        satelliteTexture.minFilter = THREE.LinearMipmapLinearFilter
+        satelliteTexture.magFilter = THREE.LinearFilter
+        satelliteTexture.generateMipmaps = true
         satelliteTexture.needsUpdate = true
 
         const material = new THREE.MeshBasicMaterial({

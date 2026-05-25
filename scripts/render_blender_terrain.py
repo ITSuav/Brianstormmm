@@ -15,11 +15,13 @@ OUTPUT_DIR = PROJECT_ROOT / "public" / "assets" / "drone-twin" / "hkstp"
 RENDER_PATH = OUTPUT_DIR / "hk-gee-blender-terrain.png"
 MODEL_PATH = OUTPUT_DIR / "hk-gee-terrain-model.glb"
 BLENDER_MANIFEST_PATH = OUTPUT_DIR / "blender-manifest.json"
-GRID_SIZE = 224
+GRID_SIZE = 384
 TERRAIN_WIDTH = 7.2
 TERRAIN_DEPTH = 5.1
-VERTICAL_SCALE = 1.05
+VERTICAL_SCALE = 1.16
 TERRAIN_BASE_Z = -0.18
+RENDER_RESOLUTION = (3840, 2400)
+RENDER_SAMPLES = 192
 
 
 def require_inputs() -> None:
@@ -167,12 +169,12 @@ def add_camera_and_lights() -> None:
     camera = bpy.data.cameras.new("command-center-camera")
     camera_object = bpy.data.objects.new("command-center-camera", camera)
     bpy.context.collection.objects.link(camera_object)
-    camera_object.location = (4.8, -5.8, 3.7)
-    target = Vector((0, 0, 0.55))
+    camera_object.location = (4.45, -5.15, 4.35)
+    target = Vector((0, 0, 0.66))
     direction = target - camera_object.location
     camera_object.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
     camera.type = "ORTHO"
-    camera.ortho_scale = 6.6
+    camera.ortho_scale = 5.85
     bpy.context.scene.camera = camera_object
 
     sun = bpy.data.lights.new("low-sun", "SUN")
@@ -192,9 +194,9 @@ def add_camera_and_lights() -> None:
 def render_scene() -> None:
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_EEVEE_NEXT"
-    scene.eevee.taa_render_samples = 64
-    scene.render.resolution_x = 2200
-    scene.render.resolution_y = 1238
+    scene.eevee.taa_render_samples = RENDER_SAMPLES
+    scene.render.resolution_x = RENDER_RESOLUTION[0]
+    scene.render.resolution_y = RENDER_RESOLUTION[1]
     scene.world = bpy.data.worlds.new("black-world")
     scene.world.color = (0.005, 0.005, 0.006)
     scene.render.filepath = str(RENDER_PATH)
@@ -240,6 +242,8 @@ def main() -> None:
             "meshGridSize": GRID_SIZE,
             "verticalScale": VERTICAL_SCALE,
             "baseZ": TERRAIN_BASE_Z,
+            "renderResolution": RENDER_RESOLUTION,
+            "renderSamples": RENDER_SAMPLES,
             "sourceBounds": gee_manifest.get("bounds"),
             "mode": "solid terrain mesh with real Sentinel-2 satellite texture draped over DEM terrain",
         },
