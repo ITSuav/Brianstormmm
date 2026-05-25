@@ -18,7 +18,7 @@ BLENDER_MANIFEST_PATH = OUTPUT_DIR / "blender-manifest.json"
 GRID_SIZE = 384
 TERRAIN_WIDTH = 7.2
 TERRAIN_DEPTH = 5.1
-VERTICAL_SCALE = 1.16
+VERTICAL_SCALE = 1.5
 TERRAIN_BASE_Z = -0.18
 RENDER_RESOLUTION = (3840, 2400)
 RENDER_SAMPLES = 192
@@ -174,7 +174,7 @@ def add_camera_and_lights() -> None:
     direction = target - camera_object.location
     camera_object.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
     camera.type = "ORTHO"
-    camera.ortho_scale = 5.85
+    camera.ortho_scale = 5.55
     bpy.context.scene.camera = camera_object
 
     sun = bpy.data.lights.new("low-sun", "SUN")
